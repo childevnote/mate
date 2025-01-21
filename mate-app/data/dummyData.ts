@@ -21,7 +21,7 @@ export interface Post {
 function generateComment(): Comment {
   return {
     id: faker.number.int(),
-    author: faker.internet.userName(),
+    author: faker.internet.username(),
     content: faker.lorem.paragraph(),
     university: faker.helpers.arrayElement(['서울대학교', '연세대학교', '고려대학교', '한양대학교', '서강대학교']),
     likes: faker.number.int({ min: 0, max: 50 }),
@@ -33,7 +33,7 @@ function generatePost(): Post {
     id: faker.number.int(),
     title: faker.lorem.sentence(),
     content: faker.lorem.paragraphs(2),
-    author: faker.internet.userName(),
+    author: faker.internet.username(),
     university: faker.helpers.arrayElement(['서울대학교', '연세대학교', '고려대학교', '한양대학교', '서강대학교']),
     likes: faker.number.int({ min: 0, max: 1000 }),
     comments: Array.from({ length: faker.number.int({ min: 1, max: 5 }) }, generateComment),

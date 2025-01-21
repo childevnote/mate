@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Header } from '../components/Header';
 import { Banner } from '../components/Banner';
 import { SearchBar } from '../components/SearchBar';
@@ -21,7 +21,8 @@ const MateCommunity: React.FC = () => {
     <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
       <div className="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen transition-colors duration-300">
         <Header darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
-        <Banner />
+        <div className="pt-16">
+          <Banner />
         <main className="max-w-6xl mx-auto px-4 py-8">
           <SearchBar />
           <Categories />
@@ -32,6 +33,7 @@ const MateCommunity: React.FC = () => {
           </div>
         </main>
         <Footer />
+        </div>
       </div>
     </div>
   );
