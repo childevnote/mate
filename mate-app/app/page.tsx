@@ -1,21 +1,27 @@
 "use client"
 
 import React from 'react';
-import { Header } from '../components/Header';
-import { Banner } from '../components/Banner';
-import { SearchBar } from '../components/SearchBar';
-import { Categories } from '../components/Categories';
-import { PostItem } from '../components/PostItem';
-import { Footer } from '../components/Footer';
+import { Header } from '../components/header';
+import { Banner } from '../components/banner';
+import { SearchBar } from '../components/searchBar';
+import { Categories } from '../components/categories';
+import { PostItem } from '../components/postItem';
+import { Footer } from '../components/footer';
 import { dummyPosts } from '../data/dummyData';
 import { useDarkMode } from '@/hooks/useDarkmode';
+import { useCategoryFilter } from '@/store/useCategoryFilter';
+
 
 const MateCommunity: React.FC = () => {
   const { darkMode, toggleDarkMode } = useDarkMode();
+  const { selectedCategory } = useCategoryFilter();
 
   if (darkMode === null) {
     return null;
   }
+  const filteredPosts = selectedCategory
+  ? dummyPosts.filter((post) => post.category === selectedCategory)
+  : dummyPosts; 
 
   return (
     <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
@@ -23,11 +29,11 @@ const MateCommunity: React.FC = () => {
         <Header darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
         <div className="pt-16">
           <Banner />
-        <main className="max-w-6xl mx-auto px-4 py-8">
+        <main className="max-w-6xl mx-auto px-10 py-8">
           <SearchBar />
           <Categories />
-          <div className="space-y-4">
-            {dummyPosts.map((post) => (
+          <div className="space-y-6">
+            {filteredPosts.map((post) => (
               <PostItem key={post.id} post={post} />
             ))}
           </div>

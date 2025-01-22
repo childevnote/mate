@@ -11,6 +11,7 @@ export interface Comment {
 export interface Post {
   id: number;
   title: string;
+  category: string;
   content: string;
   author: string;
   university: string;
@@ -32,6 +33,7 @@ function generatePost(): Post {
   return {
     id: faker.number.int(),
     title: faker.lorem.sentence(),
+    category: faker.helpers.arrayElement(['입시', '스터디', '정보', '시사', '자유','취업']),
     content: faker.lorem.paragraphs(2),
     author: faker.internet.username(),
     university: faker.helpers.arrayElement(['서울대학교', '연세대학교', '고려대학교', '한양대학교', '서강대학교']),
