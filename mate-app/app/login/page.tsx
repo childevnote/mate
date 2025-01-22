@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from 'react';
-import { Logo } from '../../components/Logo';
+import { Logo } from '../../components/logo';
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -14,18 +14,16 @@ export default function LoginPage() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle login logic here
     console.log('Login:', { email, password });
   };
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle registration logic here
     console.log('Register:', { name, email, password, university });
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col justify-center items-center p-4">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col justify-center items-center">
       <Logo className="mb-8" />
       <div className="w-full max-w-md">
         <Tabs defaultValue="login" className="w-full">
