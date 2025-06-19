@@ -39,18 +39,13 @@ export default function LoginForm({ onSuccess, initialSuccessMessage }: LoginFor
 
   // 구글 로그인
   const handleGoogleLogin = async () => {
-    setLoading(true);
-    setError("");
-    setSuccess("");
-    
-    const { error } = await loginWithGoogle();
-    
-    if (error) {
-      setError(error.message);
+    try {
+      await loginWithGoogle();
+    } catch (err) {
+      console.error("Google 로그인 에러:", err);
     }
-    
-    setLoading(false);
   };
+  
 
   return (
     <div className="space-y-6">

@@ -20,6 +20,7 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
   const [passwordValid, setPasswordValid] = useState(true);
   const [checkingUsername, setCheckingUsername] = useState(false);
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+  const [usernameTouched, setUsernameTouched] = useState(false);
   
   // 비밀번호 유효성 정규식 (최소 8자, 소문자, 대문자, 숫자, 특수문자 포함)
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{8,}$/;
@@ -82,7 +83,7 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
     const { data, error } = await registerUser(username, password, name);
   
     if (error) {
-      setError(error.message || "회원가입 중 오류가 발생했습니다.");
+      setError(error+"" || "회원가입 중 오류가 발생했습니다.");
     } else {
       // 폼 초기화
       setUsername("");
@@ -131,8 +132,25 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
             type="text"
             placeholder="이름 입력"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => {
+              // 한글, 영어, 숫자만 허용 (공백 및 특수문자 제거)
+              const filtered = e.target.value.replace(/[^a-zA-Z0-9ㄱ-ㅎ가-힣]/g, "");
+              setName(filtered);
+            }}
+            
+            onKeyDown={(e) => {
+              // 공백 및 특수문자 입력 차단
+              const invalidKeys = [
+                " ", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "-", "_",
+                "+", "=", "[", "]", "{", "}", "\\", "|", ";", ":", "'", '"',
+                ",", "<", ".", ">", "/", "?"
+              ];
+              if (invalidKeys.includes(e.key)) {
+                e.preventDefault();
+              }
+            }}
             required
+            maxLength={22}
             className="h-12 rounded-xl border-gray-300 focus:ring-primary focus:border-primary"
           />
         </div>
@@ -145,11 +163,28 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
               type="text"
               placeholder="아이디 입력 (3자 이상)"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={(e) => {
+                // 한글, 영문, 숫자만 허용 (정규식으로 필터링)
+                const filtered = e.target.value.replace(/[^a-zA-Z0-9ㄱ-ㅎ가-힣]/g, "");
+                setUsername(filtered);
+                if (!usernameTouched) setUsernameTouched(true); // 입력 시작 감지
+              }}
+              onKeyDown={(e) => {
+                // 스페이스, 특수문자 입력 차단 (예: Shift+숫자 등)
+                const invalidKeys = [
+                  " ", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "-", "_",
+                  "+", "=", "[", "]", "{", "}", "\\", "|", ";", ":", "'", '"',
+                  ",", "<", ".", ">", "/", "?"
+                ];
+                if (invalidKeys.includes(e.key)) {
+                  e.preventDefault();
+                }
+              }}
               required
               minLength={3}
+              maxLength={22}
               className={`h-12 rounded-xl ${
-                usernameAvailable === false 
+                usernameTouched && (usernameAvailable === false || username.length < 3)
                   ? "border-red-300 focus:ring-red-500 focus:border-red-500" 
                   : usernameAvailable === true
                     ? "border-green-300 focus:ring-green-500 focus:border-green-500"
@@ -177,6 +212,11 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
               사용 가능한 아이디입니다.
             </p>
           )}
+          {username.length > 0 && username.length < 3 && (
+            <p className="text-red-500 text-xs mt-2">
+              아이디는 최소 3글자 이상이어야 합니다.
+            </p>
+)}
         </div>
         <div>
           <label className="text-sm font-medium text-gray-700 mb-1.5 block">
