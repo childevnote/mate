@@ -125,3 +125,20 @@ AUTH_USER_MODEL = 'users.User'
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
 ]
+
+# DRF가 JWT 인증을 사용하도록 설정
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+}
+
+# JWT 토큰의 유효기간 설정
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),  # 출입증: 1시간 유효
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),     # 재발급권: 1일 유효
+    'ROTATE_REFRESH_TOKENS': True,                   # 재발급 시 새 토큰 교체 (보안 강화)
+    'BLACKLIST_AFTER_ROTATION': True,                # 이전 토큰은 사용 불가 처리
+}
