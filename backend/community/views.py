@@ -1,4 +1,5 @@
 from rest_framework import viewsets, permissions, status
+from .permissions import IsOwnerOrReadOnly
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
@@ -8,7 +9,7 @@ from .serializers import PostListSerializer, PostDetailSerializer, CommentSerial
 # 게시글 관련 뷰셋 (목록, 상세, 생성, 수정, 삭제 한방에 해결)
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all().order_by('-created_at') # 최신순 정렬
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly] # 조회는 누구나, 작성은 로그인한 사람만
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly] # 조회는 누구나, 작성은 로그인한 사람만
 
     # 상황에 따라 다른 시리얼라이저 쓰기 (목록엔 짧게, 상세엔 길게)
     def get_serializer_class(self):
@@ -57,8 +58,8 @@ class PostViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+    
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
