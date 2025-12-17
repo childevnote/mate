@@ -1,0 +1,51 @@
+from rest_framework import serializers
+from .models import Post, Comment
+from users.serializers import UserSerializer # 유저 정보 보여주기 위해
+
+# 댓글 시리얼라이저
+class CommentSerializer(serializers.ModelSerializer):
+    author_nickname = serializers.ReadOnlyField(source='author.nickname') # 작성자 닉네임 표시
+    author_university = serializers.ReadOnlyField(source='author.university.name') # 작성자 학교 표시
+    reply_count = serializers.SerializerMethodField() # 대댓글 개수
+
+    class Meta:
+        model = Comment
+        fields = ('id', 'parent', 'author_nickname', 'author_university', 'content', 'created_at', 'reply_count')
+        read_only_fields = ('author', 'post', 'created_at')
+
+    def get_reply_count(self, obj):
+        return obj.replies.count()
+
+# 게시글 리스트용 (간략한 정보)
+class PostListSerializer(serializers.ModelSerializer):
+    author_nickname = serializers.ReadOnlyField(source='author.nickname')
+    author_university = serializers.ReadOnlyField(source='author.university.name')
+    like_count = serializers.ReadOnlyField() # 좋아요 수 (모델의 property 사용)
+    comment_count = serializers.IntegerField(source='comments.count', read_only=True) # 댓글 수
+
+    class Meta:
+        model = Post
+        fields = (
+            'id', 'category', 'title', 'author_nickname', 'author_university',
+            'view_count', 'like_count', 'comment_count', 'created_at'
+        )
+
+# 게시글 상세용 (모든 정보 + 댓글 포함)
+class PostDetailSerializer(serializers.ModelSerializer):
+    author_nickname = serializers.ReadOnlyField(source='author.nickname')
+    author_university = serializers.ReadOnlyField(source='author.university.name')
+    like_count = serializers.ReadOnlyField()
+    comments = CommentSerializer(many=True, read_only=True) # 댓글들도 같이 보여주기
+
+    class Meta:
+        model = Post
+        fields = (
+            'id', 'category', 'title', 'content', 'author_nickname', 'author_university',
+            'view_count', 'like_count', 'comments', 'created_at', 'updated_at'
+        )
+        read_only_fields = ('author', 'view_count', 'likes', 'scraps')
+    
+    def create(self, validated_data):
+        # 글 생성 시 작성자는 현재 로그인한 유저로 자동 설정
+        validated_data['author'] = self.context['request'].user
+        return super().create(validated_data)
