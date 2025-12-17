@@ -143,3 +143,13 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS': True,                   # 재발급 시 새 토큰 교체 (보안 강화)
     'BLACKLIST_AFTER_ROTATION': True,                # 이전 토큰은 사용 불가 처리
 }
+
+# 이메일 전송 설정 (Google SMTP)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+from decouple import config
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
