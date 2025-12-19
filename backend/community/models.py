@@ -14,11 +14,11 @@ class Post(models.Model):
     title = models.CharField(max_length=100)
     content = models.TextField()
     
-    # 조회수 및 상호작용
     view_count = models.PositiveIntegerField(default=0)
     likes = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='liked_posts', blank=True)
     scraps = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='scrapped_posts', blank=True)
-
+    image = models.ImageField(upload_to='posts/%Y/%m/%d/', null=True, blank=True)
+    title = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

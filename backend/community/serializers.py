@@ -16,7 +16,7 @@ class CommentSerializer(serializers.ModelSerializer):
     def get_reply_count(self, obj):
         return obj.replies.count()
 
-# 게시글 리스트용 (간략한 정보)
+# 게시글 리스트용
 class PostListSerializer(serializers.ModelSerializer):
     author_nickname = serializers.ReadOnlyField(source='author.nickname')
     author_university = serializers.ReadOnlyField(source='author.university.name')
@@ -26,11 +26,11 @@ class PostListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = (
-            'id', 'category', 'title', 'author_nickname', 'author_university',
+            'id', 'category', 'title', 'image', 'author_nickname', 'author_university',
             'view_count', 'like_count', 'comment_count', 'created_at'
         )
 
-# 게시글 상세용 (모든 정보 + 댓글 포함)
+# 게시글 상세용
 class PostDetailSerializer(serializers.ModelSerializer):
     author_nickname = serializers.ReadOnlyField(source='author.nickname')
     author_university = serializers.ReadOnlyField(source='author.university.name')
@@ -40,7 +40,7 @@ class PostDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = (
-            'id', 'category', 'title', 'content', 'author_nickname', 'author_university',
+            'id', 'category', 'title', 'image', 'content', 'author_nickname', 'author_university',
             'view_count', 'like_count', 'comments', 'created_at', 'updated_at'
         )
         read_only_fields = ('author', 'view_count', 'likes', 'scraps')

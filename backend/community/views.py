@@ -1,3 +1,5 @@
+from rest_framework import viewsets, permissions, status, filters
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, permissions, status
 from .permissions import IsOwnerOrReadOnly
 from rest_framework.response import Response
@@ -10,6 +12,18 @@ from .serializers import PostListSerializer, PostDetailSerializer, CommentSerial
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all().order_by('-created_at') # 최신순 정렬
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly] # 조회는 누구나, 작성은 로그인한 사람만
+
+# 적용할 필터 종류 설정
+    filter_backends = [
+        DjangoFilterBackend,       # 카테고리 등 정확한 일치 필터
+        filters.SearchFilter,      # 검색 (Search)
+        filters.OrderingFilter     # 정렬 (Ordering)
+    ]
+
+    # 각 필터별 세부 설정
+    filterset_fields = ['category']  # ?category=FREE 기능
+    search_fields = ['title', 'content', 'author__nickname'] # ?search=내용 기능 (제목+본문+닉네임 검색)
+    ordering_fields = ['created_at', 'view_count', 'like_count'] # ?ordering=-view_count 기능
 
     # 상황에 따라 다른 시리얼라이저 쓰기 (목록엔 짧게, 상세엔 길게)
     def get_serializer_class(self):
