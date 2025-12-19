@@ -1,7 +1,10 @@
 # users/urls.py
 
 from django.urls import path
-from .views import RegisterView, SendEmailVerificationView, VerifyCodeView
+from .views import (
+    RegisterView, SendEmailVerificationView, VerifyCodeView, 
+    MyProfileView, MyPostListView, MyScrapListView 
+)
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -18,4 +21,11 @@ urlpatterns = [
     
     # 토큰 재발급 (로그인 연장)
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
+    # 내 정보 수
+    path('me/', MyProfileView.as_view(), name='my_profile'),
+    # 내가 쓴 글
+    path('me/posts/', MyPostListView.as_view(), name='my_posts'), 
+    # 내가 스크랩한 글
+    path('me/scraps/', MyScrapListView.as_view(), name='my_scraps'),
 ]
