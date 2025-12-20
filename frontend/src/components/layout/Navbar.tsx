@@ -20,11 +20,11 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="bg-white border-b sticky top-0 z-50">
+    <nav className="bg-background border-b sticky top-0 z-50">
       <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
         {/* 로고 */}
-        <Link href="/" className="text-2xl font-black text-indigo-600 tracking-tight">
-          MATE
+        <Link href="/" className="text-2xl font-black text-primary tracking-tight">
+          mate
         </Link>
 
         {/* 우측 메뉴 */}
@@ -36,13 +36,13 @@ export default function Navbar() {
               </span>
               <Link 
                 href="/write" 
-                className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-indigo-700 transition shadow-sm"
+                className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-indigo-700 transition shadow-sm"
               >
                 새 글 쓰기
               </Link>
               <button 
                 onClick={handleLogout}
-                className="text-sm text-gray-500 hover:text-gray-800"
+                className="text-sm text-muted-foreground hover:text-gray-800"
               >
                 로그아웃
               </button>
@@ -50,7 +50,7 @@ export default function Navbar() {
           ) : (
             <Link 
               href="/login" 
-              className="text-sm font-bold text-gray-600 hover:text-indigo-600 transition"
+              className="text-sm font-bold text-muted-foreground hover:text-primary transition"
             >
               로그인
             </Link>

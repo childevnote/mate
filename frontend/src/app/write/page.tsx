@@ -26,10 +26,10 @@ export default function WritePage() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Navbar />
       <main className="max-w-3xl mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">새로운 이야기 작성</h1>
+        <h1 className="text-2xl font-bold text-foreground mb-6">새로운 이야기 작성</h1>
         
         {/* 폼 컴포넌트 재사용 */}
         <PostForm 

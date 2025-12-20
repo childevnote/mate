@@ -42,7 +42,7 @@ export default function PostForm({ initialData, onSubmit, isSubmitting }: PostFo
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+    <form onSubmit={handleSubmit} className="bg-background p-6 rounded-xl shadow-sm border border-gray-100">
       {/* 1. 카테고리 선택 */}
       <div className="mb-4">
         <label className="block text-sm font-bold text-gray-700 mb-2">카테고리</label>
@@ -90,7 +90,7 @@ export default function PostForm({ initialData, onSubmit, isSubmitting }: PostFo
             type="file"
             accept="image/*"
             onChange={(e) => setImage(e.target.files ? e.target.files[0] : null)}
-            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition"
+            className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition"
           />
         </div>
       </div>
@@ -100,14 +100,14 @@ export default function PostForm({ initialData, onSubmit, isSubmitting }: PostFo
         <button
           type="button"
           onClick={() => router.back()}
-          className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+          className="px-4 py-2 text-gray-700 bg-background border border-gray-300 rounded-lg hover:bg-background transition"
         >
           취소
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="px-6 py-2 text-white bg-indigo-600 rounded-lg font-bold hover:bg-indigo-700 transition disabled:bg-indigo-300"
+          className="px-6 py-2 text-white bg-primary rounded-lg font-bold hover:bg-indigo-700 transition disabled:bg-indigo-300"
         >
           {isSubmitting ? '저장 중...' : '등록하기'}
         </button>

@@ -51,8 +51,8 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-md">
-        <h2 className="text-2xl font-bold text-center text-gray-900">
+      <div className="w-full max-w-md p-8 space-y-6 bg-background rounded-xl shadow-md">
+        <h2 className="text-2xl font-bold text-center text-foreground">
           로그인
         </h2>
 
@@ -98,16 +98,16 @@ export default function LoginPage() {
               className={`w-full px-4 py-2 text-white font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500
                 ${loginMutation.isPending 
                   ? 'bg-indigo-400 cursor-not-allowed' 
-                  : 'bg-indigo-600 hover:bg-indigo-700'}`}
+                  : 'bg-primary hover:bg-indigo-700'}`}
             >
               {loginMutation.isPending ? '로그인 중...' : '로그인'}
             </button>
           </div>
         </form>
 
-        <div className="text-sm text-center text-gray-600">
+        <div className="text-sm text-center text-muted-foreground">
           아직 계정이 없으신가요?{' '}
-          <a href="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
+          <a href="/register" className="font-medium text-primary hover:text-indigo-500">
             회원가입
           </a>
         </div>

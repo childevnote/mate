@@ -5,7 +5,7 @@ import SearchBar from '@/components/community/SearchBar';
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* 1. 상단 네비게이션 */}
       <Navbar />
 
