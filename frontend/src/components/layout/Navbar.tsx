@@ -23,8 +23,10 @@ export default function Navbar() {
     <nav className="bg-background border-b sticky top-0 z-50">
       <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
         {/* 로고 */}
-        <Link href="/" className="text-2xl font-black text-primary tracking-tight">
-          mate
+        <Link href="/" className="flex items-center gap-2">
+          <span className="text-3xl font-black tracking-[-0.075em] text-foreground hover:opacity-80 transition-opacity">
+            mate
+          </span>
         </Link>
 
         {/* 우측 메뉴 */}
