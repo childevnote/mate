@@ -4,6 +4,7 @@ export interface Post {
   id: number;
   category: string;
   title: string;
+  content: string;
   image?: string | null;      
   author_nickname: string;
   view_count: number;
