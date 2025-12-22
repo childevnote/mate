@@ -9,6 +9,37 @@ from community.models import Post
 from community.serializers import PostListSerializer
 from .serializers import UserSerializer, CheckCodeSerializer
 from .models import User, University, EmailVerification
+from django.contrib.auth import get_user_model
+from rest_framework_simplejwt.views import TokenObtainPairView
+from .serializers import CustomTokenObtainPairSerializer
+
+User = get_user_model()
+
+class CheckUsernameView(APIView):
+    """
+    GET /api/users/check-username/?username=...
+    아이디 중복 확인 API
+    """
+    def get(self, request):
+        username = request.query_params.get('username', None)
+
+        if not username:
+            return Response(
+                {"message": "검사할 아이디가 전달되지 않았습니다."}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if User.objects.filter(username=username).exists():
+            return Response({
+                "isAvailable": False, 
+                "message": "이미 사용 중인 아이디입니다."
+            }, status=status.HTTP_200_OK)
+        
+        return Response({
+            "isAvailable": True, 
+            "message": "사용 가능한 아이디입니다."
+        }, status=status.HTTP_200_OK)
+    
 
 # 회원가입 뷰
 class RegisterView(generics.CreateAPIView):
@@ -108,7 +139,7 @@ class MyProfileView(APIView):
 
     def patch(self, request):
         user = request.user
-        serializer = UserSerializer(user, data=request.data, partial=True) # partial=True: 일부만 수정 가능
+        serializer = UserSerializer(user, data=request.data, partial=True) 
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -120,7 +151,6 @@ class MyPostListView(generics.ListAPIView):
     serializer_class = PostListSerializer
 
     def get_queryset(self):
-        # author가 '현재 로그인한 유저'인 글만 필터링
         return Post.objects.filter(author=self.request.user).order_by('-created_at')
 
 # 내가 스크랩한 글 목록 (GET)
@@ -129,5 +159,7 @@ class MyScrapListView(generics.ListAPIView):
     serializer_class = PostListSerializer
 
     def get_queryset(self):
-        # user.scrapped_posts는 models.py의 related_name='scrapped_posts' 덕분에 사용 가능
         return self.request.user.scrapped_posts.all().order_by('-created_at')
+    
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
