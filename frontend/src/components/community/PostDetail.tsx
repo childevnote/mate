@@ -67,7 +67,7 @@ export default function PostDetail({ postId }: PostDetailProps) {
       {/* 1. 헤더: 카테고리, 제목, 작성자 */}
       <div className="p-6 border-b border-gray-100">
         <div className="flex justify-between items-center mb-4">
-          <span className="bg-indigo-50 text-indigo-700 text-xs font-bold px-2.5 py-1 rounded">
+          <span className="bg-primary/5 text-primary text-xs font-bold px-2.5 py-1 rounded">
             {post.category}
           </span>
           <span className="text-sm text-muted-foreground">

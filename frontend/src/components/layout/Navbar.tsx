@@ -44,7 +44,7 @@ export default function Navbar() {
               </span>
               <Link
                 href="/write"
-                className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-indigo-700 transition shadow-sm"
+                className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-primary transition shadow-sm"
               >
                 새 글 쓰기
               </Link>

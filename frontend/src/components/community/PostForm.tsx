@@ -53,9 +53,10 @@ export default function PostForm({
           카테고리
         </label>
         <select
+          aria-label="카테고리 선택"
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-primary transition"
         >
           <option value="FREE">자유게시판</option>
           <option value="INFO">정보공유</option>
@@ -73,7 +74,7 @@ export default function PostForm({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="제목을 입력하세요"
-          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-primary transition"
           required
         />
       </div>
@@ -87,7 +88,7 @@ export default function PostForm({
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="내용을 자유롭게 작성해주세요"
-          className="w-full h-64 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition resize-none"
+          className="w-full h-64 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-primary transition resize-none"
           required
         />
       </div>
@@ -99,12 +100,13 @@ export default function PostForm({
         </label>
         <div className="flex items-center space-x-4">
           <input
+            aria-label="이미지 첨부"
             type="file"
             accept="image/*"
             onChange={(e) =>
               setImage(e.target.files ? e.target.files[0] : null)
             }
-            className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition"
+            className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/5 file:text-primary hover:file:bg-primary/10 transition"
           />
         </div>
       </div>
@@ -121,7 +123,7 @@ export default function PostForm({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="px-6 py-2 text-white bg-primary rounded-lg font-bold hover:bg-indigo-700 transition disabled:bg-indigo-300"
+          className="px-6 py-2 text-white bg-primary rounded-lg font-bold hover:bg-primary transition disabled:bg-primary/40"
         >
           {isSubmitting ? "저장 중..." : "등록하기"}
         </button>
