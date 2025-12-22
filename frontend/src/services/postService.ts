@@ -1,4 +1,3 @@
-import LoginPage from "@/app/login/page";
 import api from "@/lib/axios";
 
 export const postService = {

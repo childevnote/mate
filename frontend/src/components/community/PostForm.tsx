@@ -1,10 +1,7 @@
-'use client'
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-
-// 폼에서 사용할 데이터 타입 정의
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 interface PostFormData {
   title: string;
   content: string;
@@ -13,40 +10,49 @@ interface PostFormData {
 }
 
 interface PostFormProps {
-  initialData?: PostFormData; // 수정 모드일 때 초기값
-  onSubmit: (formData: FormData) => void; // 부모에게 데이터 전달
+  initialData?: PostFormData;
+  onSubmit: (formData: FormData) => void;
   isSubmitting: boolean;
 }
 
-export default function PostForm({ initialData, onSubmit, isSubmitting }: PostFormProps) {
+export default function PostForm({
+  initialData,
+  onSubmit,
+  isSubmitting,
+}: PostFormProps) {
   const router = useRouter();
-  
-  const [title, setTitle] = useState(initialData?.title || '');
-  const [content, setContent] = useState(initialData?.content || '');
-  const [category, setCategory] = useState(initialData?.category || 'FREE');
+
+  const [title, setTitle] = useState(initialData?.title || "");
+  const [content, setContent] = useState(initialData?.content || "");
+  const [category, setCategory] = useState(initialData?.category || "FREE");
   const [image, setImage] = useState<File | null>(initialData?.image || null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // FormData로 변환 (이미지 전송 필수)
     const formData = new FormData();
-    formData.append('title', title);
-    formData.append('content', content);
-    formData.append('category', category);
+    formData.append("title", title);
+    formData.append("content", content);
+    formData.append("category", category);
     if (image) {
-      formData.append('image', image);
+      formData.append("image", image);
     }
 
     onSubmit(formData);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-background p-6 rounded-xl shadow-sm border border-gray-100">
+    <form
+      onSubmit={handleSubmit}
+      className="bg-background p-6 rounded-xl shadow-sm border border-gray-100"
+    >
       {/* 1. 카테고리 선택 */}
       <div className="mb-4">
-        <label className="block text-sm font-bold text-gray-700 mb-2">카테고리</label>
-        <select 
+        <label className="block text-sm font-bold text-gray-700 mb-2">
+          카테고리
+        </label>
+        <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
           className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
@@ -59,7 +65,9 @@ export default function PostForm({ initialData, onSubmit, isSubmitting }: PostFo
 
       {/* 2. 제목 입력 */}
       <div className="mb-4">
-        <label className="block text-sm font-bold text-gray-700 mb-2">제목</label>
+        <label className="block text-sm font-bold text-gray-700 mb-2">
+          제목
+        </label>
         <input
           type="text"
           value={title}
@@ -72,7 +80,9 @@ export default function PostForm({ initialData, onSubmit, isSubmitting }: PostFo
 
       {/* 3. 본문 입력 */}
       <div className="mb-4">
-        <label className="block text-sm font-bold text-gray-700 mb-2">내용</label>
+        <label className="block text-sm font-bold text-gray-700 mb-2">
+          내용
+        </label>
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
@@ -84,12 +94,16 @@ export default function PostForm({ initialData, onSubmit, isSubmitting }: PostFo
 
       {/* 4. 이미지 업로드 */}
       <div className="mb-6">
-        <label className="block text-sm font-bold text-gray-700 mb-2">이미지 첨부 (선택)</label>
+        <label className="block text-sm font-bold text-gray-700 mb-2">
+          이미지 첨부 (선택)
+        </label>
         <div className="flex items-center space-x-4">
           <input
             type="file"
             accept="image/*"
-            onChange={(e) => setImage(e.target.files ? e.target.files[0] : null)}
+            onChange={(e) =>
+              setImage(e.target.files ? e.target.files[0] : null)
+            }
             className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition"
           />
         </div>
@@ -109,7 +123,7 @@ export default function PostForm({ initialData, onSubmit, isSubmitting }: PostFo
           disabled={isSubmitting}
           className="px-6 py-2 text-white bg-primary rounded-lg font-bold hover:bg-indigo-700 transition disabled:bg-indigo-300"
         >
-          {isSubmitting ? '저장 중...' : '등록하기'}
+          {isSubmitting ? "저장 중..." : "등록하기"}
         </button>
       </div>
     </form>

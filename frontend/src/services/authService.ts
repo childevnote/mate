@@ -1,22 +1,25 @@
-
-import api from '@/lib/axios';
+import api from "@/lib/axios";
+import { LoginResponse, SignupRequest } from "@/types/auth";
+import { CheckUsernameResponse } from "@/types/auth";
 
 export const authService = {
-  // 로그인 요청
-  login: async (credentials: { username: string; password: string }) => {
-    const response = await api.post('/api/users/login/', credentials);
-    const { access, refresh, user } = response.data;
-
-    // 토큰 저장 (로그인 유지용)
-    localStorage.setItem('access_token', access);
-    localStorage.setItem('refresh_token', refresh);
-
-    return user;
+  checkUsername: async (username: string) => {
+    const response = await api.get<CheckUsernameResponse>(
+      `/api/users/check-username/?username=${username}`
+    );
+    return response.data;
   },
 
-  // 내 프로필 조회
-  getMe: async () => {
-    const response = await api.get('/api/users/me/');
+  register: async (signupData: SignupRequest) => {
+    const response = await api.post("/api/users/signup/", signupData);
     return response.data;
-  }
+  },
+
+  login: async (username: string, password: string) => {
+    const response = await api.post<LoginResponse>("/api/users/login/", {
+      username,
+      password,
+    });
+    return response.data;
+  },
 };

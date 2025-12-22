@@ -4,73 +4,82 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSetAtom } from "jotai";
 import { userAtom } from "@/store/authStore";
-import api from "@/lib/axios";
+import { authService } from "@/services/authService"; // 서비스 계층 사용
+import Link from "next/link";
+import axios from "axios"; // 타입 가드를 위해 import
 
 export default function LoginPage() {
   const router = useRouter();
   const setUser = useSetAtom(userAtom);
 
-  // 1. 상태 이름 변경: email -> username
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [errorMsg, setErrorMsg] = useState(""); // 에러 메시지 UI 표시용
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg("");
 
     try {
-      // 2. API 요청 Payload 변경 (email -> username)
-      const response = await api.post("/api/users/login/", {
-        username, // 백엔드가 'username' 필드를 기대해야 함
-        password,
-      });
-
-      // 3. 응답 처리
-      // 백엔드에서 user 객체 안에 'username', 'nickname', 'university'를 다 줘야 함
-      const { access, refresh, user } = response.data;
+      const data = await authService.login(username, password);
+      const { access, refresh, user } = data;
 
       localStorage.setItem("access_token", access);
       localStorage.setItem("refresh_token", refresh);
 
-      // 4. 상태 업데이트 (변경된 User 타입에 맞춰 저장)
       setUser({
         id: user.id,
         username: user.username,
         nickname: user.nickname,
-        university: user.university || undefined, // 대학 정보가 없으면 undefined 처리
+        university: user.university || undefined,
+        email: user.email || undefined,
       });
 
-      alert(`${user.nickname}님 환영합니다!`); // 닉네임으로 환영 인사
       router.push("/");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Login Failed:", error);
-      alert("로그인 실패: 아이디 또는 비밀번호를 확인해주세요.");
+
+      if (axios.isAxiosError(error)) {
+        const message =
+          (error.response?.data as { detail?: string })?.detail ||
+          (error.response?.data as { message?: string })?.message ||
+          "아이디 또는 비밀번호를 확인해주세요.";
+        setErrorMsg(message);
+      } else {
+        setErrorMsg("로그인 중 알 수 없는 오류가 발생했습니다.");
+      }
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="max-w-md w-full bg-white p-8 rounded-xl shadow-md border border-border">
-        <h1 className="text-2xl font-bold text-center mb-6 text-foreground">
-          로그인
-        </h1>
-        <form onSubmit={handleLogin} className="space-y-4">
-          {/* 5. UI 라벨 및 입력 타입 변경 */}
+    <div className="min-h-screen flex items-center justify-center bg-background px-4 transition-colors duration-300">
+      <div className="max-w-md w-full bg-white dark:bg-zinc-800 p-8 rounded-xl shadow-lg border border-border">
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-black tracking-tight text-foreground mb-2">
+            로그인
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            mate에 오신 것을 환영합니다.
+          </p>
+        </div>
+
+        <form onSubmit={handleLogin} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-muted-foreground mb-1">
+            <label className="block text-sm font-bold text-foreground mb-1">
               아이디
             </label>
             <input
-              type="text" // 이메일 형식이 아니므로 text로 변경
+              type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="아이디를 입력하세요"
-              className="w-full p-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:outline-none bg-background text-foreground"
+              className="w-full p-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:outline-none bg-background text-foreground transition-all"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-muted-foreground mb-1">
+            <label className="block text-sm font-bold text-foreground mb-1">
               비밀번호
             </label>
             <input
@@ -78,25 +87,33 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="비밀번호를 입력하세요"
-              className="w-full p-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:outline-none bg-background text-foreground"
+              className="w-full p-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:outline-none bg-background text-foreground transition-all"
               required
             />
           </div>
 
+          {errorMsg && (
+            <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 text-red-600 dark:text-red-300 text-sm text-center font-medium animate-pulse">
+              ⚠️ {errorMsg}
+            </div>
+          )}
+
           <button
             type="submit"
-            className="w-full py-3 bg-primary text-primary-foreground rounded-lg font-bold hover:opacity-90 transition"
+            className="w-full py-3.5 bg-primary text-primary-foreground rounded-lg font-bold text-lg hover:opacity-90 active:scale-[0.98] transition-all shadow-sm"
           >
             로그인하기
           </button>
         </form>
 
-        {/* 회원가입 링크 등 추가 가능 */}
-        <div className="mt-4 text-center text-sm text-muted-foreground">
+        <div className="mt-6 text-center text-sm text-muted-foreground">
           계정이 없으신가요?{" "}
-          <span className="underline cursor-pointer hover:text-foreground">
+          <Link
+            href="/signup"
+            className="font-bold text-primary underline underline-offset-4 hover:text-foreground transition-colors"
+          >
             회원가입
-          </span>
+          </Link>
         </div>
       </div>
     </div>
