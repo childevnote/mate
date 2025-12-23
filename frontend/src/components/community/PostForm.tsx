@@ -59,8 +59,8 @@ export default function PostForm({
           className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-primary transition"
         >
           <option value="FREE">자유게시판</option>
-          <option value="INFO">정보공유</option>
-          <option value="QUESTION">질문하기</option>
+          <option value="INFO">정보게시판</option>
+          <option value="GATHERING">모임게시판</option>
         </select>
       </div>
 
