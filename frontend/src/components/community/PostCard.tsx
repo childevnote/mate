@@ -46,13 +46,20 @@ export default function PostCard({ post }: PostCardProps) {
               {post.author_nickname}
             </span>
           </div>
-          <div className="flex gap-3 text-xs">
-            <span className="flex items-center gap-1">
-              👁️ {post.view_count}
-            </span>
-            <span className="flex items-center gap-1">
-              ❤️ {post.like_count}
-            </span>
+          <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <span className="flex items-center gap-1">
+                👁️ {post.view_count}
+              </span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="flex items-center gap-1">
+                ❤️ {post.like_count}
+              </span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span>💬{post.comment_count}</span>
+            </div>
           </div>
         </div>
       </div>

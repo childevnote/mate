@@ -20,8 +20,8 @@ class CommentSerializer(serializers.ModelSerializer):
 class PostListSerializer(serializers.ModelSerializer):
     author_nickname = serializers.ReadOnlyField(source='author.nickname')
     author_university = serializers.ReadOnlyField(source='author.university.name')
-    like_count = serializers.ReadOnlyField() # 좋아요 수 (모델의 property 사용)
-    comment_count = serializers.IntegerField(source='comments.count', read_only=True) # 댓글 수
+    comment_count = serializers.IntegerField(read_only=True)
+    like_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Post
@@ -34,14 +34,16 @@ class PostListSerializer(serializers.ModelSerializer):
 class PostDetailSerializer(serializers.ModelSerializer):
     author_nickname = serializers.ReadOnlyField(source='author.nickname')
     author_university = serializers.ReadOnlyField(source='author.university.name')
-    like_count = serializers.ReadOnlyField()
-    comments = CommentSerializer(many=True, read_only=True) # 댓글들도 같이 보여주기
+    like_count = serializers.IntegerField(read_only=True)
+    comments = CommentSerializer(many=True, read_only=True) 
+    comment_count = serializers.IntegerField(read_only=True)
+
 
     class Meta:
         model = Post
         fields = (
             'id', 'category', 'title', 'image', 'content', 'author_nickname', 'author_university',
-            'view_count', 'like_count', 'comments', 'created_at', 'updated_at'
+            'view_count', 'like_count', 'comments', 'comment_count', 'created_at', 'updated_at'
         )
         read_only_fields = ('author', 'view_count', 'likes', 'scraps')
     

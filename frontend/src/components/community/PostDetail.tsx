@@ -62,6 +62,7 @@ export default function PostDetail({ postId }: PostDetailProps) {
     );
 
   const isAuthor = user?.nickname === post.author_nickname;
+
   return (
     <article className="bg-background rounded-xl shadow-sm border border-gray-100 overflow-hidden">
       {/* 1. 헤더: 카테고리, 제목, 작성자 */}
@@ -88,9 +89,12 @@ export default function PostDetail({ postId }: PostDetailProps) {
               {post.author_nickname}
             </span>
           </div>
+
+          {/* 🔥 수정된 부분: 댓글 수 표시 추가 */}
           <div className="flex gap-3 text-sm text-muted-foreground">
             <span>조회 {post.view_count}</span>
             <span>좋아요 {post.like_count}</span>
+            <span>댓글 {post.comment_count}</span>
           </div>
         </div>
       </div>
@@ -125,12 +129,14 @@ export default function PostDetail({ postId }: PostDetailProps) {
           <div className="flex gap-2">
             <Link
               href={`/posts/${postId}/edit`}
+              aria-label="게시글 수정하기"
               className="px-4 py-2 bg-background border border-border rounded-lg text-sm font-medium text-foreground hover:bg-muted transition"
             >
               수정
             </Link>
             <button
               onClick={handleDelete}
+              aria-label="게시글 삭제하기"
               className="px-4 py-2 bg-red-50 border border-red-100 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100 transition"
             >
               삭제

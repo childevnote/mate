@@ -25,9 +25,9 @@ class Post(models.Model):
     def __str__(self):
         return f"[{self.get_category_display()}] {self.title}"
     
-    @property
-    def like_count(self):
-        return self.likes.count()
+    # @property
+    # def like_count(self):
+    #     return self.likes.count()
 
 
 class Comment(models.Model):
