@@ -1,4 +1,4 @@
-import api from "@/lib/axios";
+import { api } from "@/lib/axios";
 import { LoginResponse, SignupRequest } from "@/types/auth";
 import { CheckUsernameResponse } from "@/types/auth";
 
@@ -20,6 +20,18 @@ export const authService = {
       username,
       password,
     });
+    if (response.data.access) {
+      localStorage.setItem("accessToken", response.data.access);
+    }
+    if (response.data.refresh) {
+      localStorage.setItem("refreshToken", response.data.refresh);
+    }
+
     return response.data;
+  },
+
+  logout: () => {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
   },
 };

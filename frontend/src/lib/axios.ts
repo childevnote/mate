@@ -1,30 +1,74 @@
 import axios from "axios";
 
-// Axios 인스턴스 생성 (기본 설정)
-const api = axios.create({
-  baseURL: "http://127.0.0.1:8000",
+const BASE_URL = "http://127.0.0.1:8000";
+
+export const api = axios.create({
+  baseURL: BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true,
 });
 
-// 요청 인터셉터 (Request Interceptor) 설정
-// API를 쏠 때마다 로컬 스토리지에서 토큰을 꺼내 헤더에 자동으로 붙여줌
 api.interceptors.request.use(
   (config) => {
-    // 브라우저 환경인지 확인 (Next.js 서버 사이드 렌더링 에러 방지)
-    if (typeof window !== "undefined") {
-      const token = localStorage.getItem("access_token");
-      if (token) {
-        // 토큰이 있으면 Authorization 헤더에 Bearer 토큰 추가
-        config.headers.Authorization = `Bearer ${token}`;
-      }
+    const token = localStorage.getItem("accessToken");
+
+    if (token) {
+      config.headers["Authorization"] = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => {
+  (error) => Promise.reject(error)
+);
+
+api.interceptors.response.use(
+  (response) => response, // 성공한 응답은 그대로 통과
+  async (error) => {
+    const originalRequest = error.config;
+
+    // 401 에러이고, 아직 재시도하지 않은 요청이라면
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true; // 무한 루프 방지용 플래그
+
+      try {
+        const refreshToken = localStorage.getItem("refreshToken");
+
+        // 리프레시 토큰조차 없다면 로그아웃
+        if (!refreshToken) {
+          throw new Error("No refresh token");
+        }
+
+        // 백엔드에 토큰 갱신 요청
+        // (Django SimpleJWT 기본 엔드포인트가 /api/token/refresh/ 라고 가정)
+        const { data } = await axios.post(`${BASE_URL}/api/token/refresh/`, {
+          refresh: refreshToken,
+        });
+
+        // 새 토큰 저장
+        localStorage.setItem("accessToken", data.access);
+
+        // 실패했던 요청의 헤더를 새 토큰으로 교체
+        originalRequest.headers["Authorization"] = `Bearer ${data.access}`;
+
+        // 실패했던 요청 재전송
+        return api(originalRequest);
+      } catch (refreshError) {
+        // 갱신 실패 (리프레시 토큰도 만료됨) -> 강제 로그아웃 처리
+        console.error("Session expired. Logging out...");
+
+        // 저장소 비우기
+        localStorage.removeItem("user"); // userAtom 저장 키
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+
+        // 로그인 페이지로 튕겨내기 (window.location을 써야 새로고침 되면서 상태가 초기화됨)
+        window.location.href = "/login";
+
+        return Promise.reject(refreshError);
+      }
+    }
+
     return Promise.reject(error);
   }
 );
-
-export default api;
