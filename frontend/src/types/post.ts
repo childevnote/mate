@@ -1,11 +1,9 @@
-
-
 export interface Post {
   id: number;
   category: string;
   title: string;
   content: string;
-  image?: string | null;      
+  image?: string | null;
   author_nickname: string;
   view_count: number;
   like_count: number;
@@ -13,6 +11,9 @@ export interface Post {
   created_at: string;
 }
 
+export interface PostDetailProps {
+  postId: number;
+}
 
 export interface PostListResponse {
   count: number;
