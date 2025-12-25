@@ -2,7 +2,7 @@
 
 import random
 from django.core.mail import send_mail
-from rest_framework import generics, status, permissions
+from rest_framework import generics, status, permissions, views
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from community.models import Post
@@ -12,14 +12,12 @@ from .models import User, University, EmailVerification
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import CustomTokenObtainPairSerializer
+from django.contrib.auth import update_session_auth_hash
+
 
 User = get_user_model()
 
 class CheckUsernameView(APIView):
-    """
-    GET /api/users/check-username/?username=...
-    아이디 중복 확인 API
-    """
     def get(self, request):
         username = request.query_params.get('username', None)
 
@@ -163,3 +161,36 @@ class MyScrapListView(generics.ListAPIView):
     
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+
+
+    
+# 비밀번호 변경
+class ChangePasswordView(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        old_pw = request.data.get('old_password')
+        new_pw = request.data.get('new_password')
+
+        if not old_pw or not new_pw:
+            return Response({"error": "비밀번호를 입력해주세요."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not user.check_password(old_pw):
+            return Response({"error": "현재 비밀번호가 일치하지 않습니다."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user.set_password(new_pw)
+        user.save()
+        # 비밀번호 변경 후 로그인이 풀리지 않도록 세션 갱신
+        update_session_auth_hash(request, user)
+        return Response({"message": "비밀번호가 성공적으로 변경되었습니다."})
+
+# 회원 탈퇴
+class DeleteAccountView(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request):
+        user = request.user
+        # 연관된 데이터 처리는 models.py의 on_delete=CASCADE 설정에 따름
+        user.delete()
+        return Response({"message": "계정이 삭제되었습니다. 이용해 주셔서 감사합니다."})

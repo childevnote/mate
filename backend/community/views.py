@@ -15,7 +15,7 @@ class PostViewSet(viewsets.ModelViewSet):
     # get_queryset에서 annotate를 사용하여 댓글/좋아요 수를 미리 계산
     def get_queryset(self):
         return Post.objects.annotate(
-            comment_count=Count('comments', distinct=True), # distinct=True: 중복 계산 방지
+            comment_count=Count('comments', distinct=True),
             like_count=Count('likes', distinct=True)
         ).order_by('-created_at')
 
@@ -26,22 +26,19 @@ class PostViewSet(viewsets.ModelViewSet):
         filters.OrderingFilter
     ]
 
-    filterset_fields = ['category']
+    filterset_fields = ['category', 'author']
+    
     search_fields = ['title', 'content', 'author__nickname']
-    # 정렬 기준에 댓글 수와 좋아요 수 추가
     ordering_fields = ['created_at', 'view_count', 'like_count', 'comment_count']
 
-    # 목록 조회와 상세 조회 시 다른 시리얼라이저 사용
     def get_serializer_class(self):
         if self.action == 'list':
             return PostListSerializer
         return PostDetailSerializer
 
-    # 글 작성 시 작성자 자동 저장
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-    # 상세 조회 시 조회수 증가 로직
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.view_count += 1
@@ -49,7 +46,7 @@ class PostViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
-    # 좋아요 토글 기능
+    # 좋아요 토글
     @action(detail=True, methods=['post'])
     def like(self, request, pk=None):
         post = self.get_object()
@@ -62,10 +59,9 @@ class PostViewSet(viewsets.ModelViewSet):
             post.likes.add(user)
             message = '좋아요!'
             
-        # 변경된 최신 좋아요 수를 반환 (post.likes.count() 사용)
         return Response({'message': message, 'like_count': post.likes.count()})
 
-    # 스크랩 토글 기능
+    # 스크랩 토글
     @action(detail=True, methods=['post'])
     def scrap(self, request, pk=None):
         post = self.get_object()
@@ -80,16 +76,30 @@ class PostViewSet(viewsets.ModelViewSet):
 
         return Response({'message': message})
 
+    # 내가 스크랩한 글 목록 가져오기 (GET /api/community/posts/scrapped/)
+    @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    def scrapped(self, request):
+        posts = self.get_queryset().filter(scraps=request.user)
+        
+        page = self.paginate_queryset(posts)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(posts, many=True)
+        return Response(serializer.data)
+
+
 # 댓글 관련 뷰셋
 class CommentViewSet(viewsets.ModelViewSet):
-    queryset = Comment.objects.all().order_by('created_at') # 댓글은 작성순 정렬
+    queryset = Comment.objects.all().order_by('created_at')
     serializer_class = CommentSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
-    pagination_class = None
-    filter_backends = [DjangoFilterBackend] 
+    pagination_class = None # 대댓글 구조를 위해 페이지네이션 끔
     
+    filter_backends = [DjangoFilterBackend] 
 
-    filterset_fields = ['post']
+    filterset_fields = ['post', 'author']
     
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)

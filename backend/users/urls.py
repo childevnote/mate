@@ -3,7 +3,7 @@
 from django.urls import path
 from .views import (
     RegisterView, SendEmailVerificationView, VerifyCodeView, 
-    MyProfileView, MyPostListView, MyScrapListView, CheckUsernameView,CustomTokenObtainPairView
+    MyProfileView, MyPostListView, MyScrapListView, CheckUsernameView,CustomTokenObtainPairView, ChangePasswordView, DeleteAccountView
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -27,4 +27,7 @@ urlpatterns = [
     path('me/posts/', MyPostListView.as_view(), name='my_posts'), 
     # 내가 스크랩한 글
     path('me/scraps/', MyScrapListView.as_view(), name='my_scraps'),
+
+    path('change-password/', ChangePasswordView.as_view(), name='change_password'),
+    path('delete-account/', DeleteAccountView.as_view(), name='delete_account'),
 ]
