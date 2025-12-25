@@ -15,6 +15,11 @@ export interface PostDetailProps {
   postId: number;
 }
 
+export interface PostListProps {
+  posts: Post[] | undefined;
+  emptyMsg: string;
+}
+
 export interface PostListResponse {
   count: number;
   next: string | null;
