@@ -85,6 +85,11 @@ class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all().order_by('created_at') # 댓글은 작성순 정렬
     serializer_class = CommentSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+    pagination_class = None
+    filter_backends = [DjangoFilterBackend] 
+    
+
+    filterset_fields = ['post']
     
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
