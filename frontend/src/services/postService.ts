@@ -1,4 +1,4 @@
-import api from "@/lib/axios";
+import { api } from "@/lib/axios";
 
 export const postService = {
   getPosts: async (page = 1, search = "") => {
@@ -36,5 +36,27 @@ export const postService = {
   login: async (email: string, password: string) => {
     const response = await api.post("/api/users/login/", { email, password });
     return response.data;
+  },
+
+  getComments: async (postId: number) => {
+    const { data } = await api.get(`/api/community/comments/?post=${postId}`);
+    return data;
+  },
+
+  createComment: async (
+    postId: number,
+    content: string,
+    parentId: number | null = null
+  ) => {
+    const { data } = await api.post("/api/community/comments/", {
+      post: postId,
+      content,
+      parent: parentId,
+    });
+    return data;
+  },
+
+  deleteComment: async (commentId: number) => {
+    await api.delete(`/api/community/comments/${commentId}/`);
   },
 };
