@@ -7,10 +7,8 @@ import { userAtom } from "@/store/authStore";
 import { postService } from "@/services/postService";
 import { Post } from "@/types/post";
 import Link from "next/link";
-
-interface PostDetailProps {
-  postId: number;
-}
+import CommentSection from "@/components/community/CommentSection";
+import { PostDetailProps } from "@/types/post";
 
 export default function PostDetail({ postId }: PostDetailProps) {
   const router = useRouter();
@@ -144,6 +142,7 @@ export default function PostDetail({ postId }: PostDetailProps) {
           </div>
         )}
       </div>
+      <CommentSection postId={postId} />
     </article>
   );
 }
