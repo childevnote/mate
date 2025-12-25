@@ -4,7 +4,6 @@ import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { postService } from "@/services/postService";
-import Navbar from "@/components/layout/Navbar";
 import PostForm from "@/components/community/PostForm";
 
 interface PageProps {
@@ -59,7 +58,6 @@ export default function EditPostPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-muted/30 pb-20">
-      <Navbar />
       <main className="max-w-3xl mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold text-foreground mb-6">게시글 수정</h1>
 

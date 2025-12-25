@@ -1,5 +1,6 @@
 import Providers from "@/components/Providers";
 import "./globals.css";
+import Navbar from "@/components/layout/Navbar";
 
 export default function RootLayout({
   children,
@@ -8,9 +9,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko">
-      <title>Mate - 대학생을 위한 커뮤니티</title>
       <body>
-        <Providers>{children}</Providers>
+        <Providers>
+          <Navbar />
+          <main className="min-h-screen bg-gray-50">{children}</main>
+        </Providers>
       </body>
     </html>
   );
