@@ -7,11 +7,13 @@ export default function HomePage() {
     <div className="min-h-screen bg-background">
       <main className="max-w-5xl mx-auto px-4 py-8">
         <div className="flex justify-end mb-8">
-          <Suspense fallback={<div>로딩 중...</div>}>
-          <SearchBar />
+          <Suspense fallback={<div>검색창 로딩 중...</div>}>
+            <SearchBar />
           </Suspense>
         </div>
-        <PostList />
+        <Suspense fallback={<div>게시글 목록 로딩 중...</div>}>
+          <PostList />
+        </Suspense>
       </main>
     </div>
   );
