@@ -1,0 +1,16 @@
+# Django Core
+Django>=4.2,<5.1
+
+# API Framework & Auth
+djangorestframework
+djangorestframework-simplejwt
+
+# Security & CORS 
+django-cors-headers
+
+# Database & Environment
+python-decouple
+
+# Features (Image, Filter)
+Pillow
+django-filter
