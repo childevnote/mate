@@ -1,10 +1,11 @@
 service: mate-backend
-frameworkVersion: '3'
+frameworkVersion: "3"
 
 provider:
   name: aws
-  runtime: python3.10  # 혹은 python3.9, 3.11 (설치된 파이썬 버전에 맞게)
+  runtime: python3.10
   region: ap-northeast-2
+  architecture: arm64
   httpApi:
     cors: true
 
@@ -12,11 +13,23 @@ functions:
   api:
     handler: main.handler
     events:
-      - httpApi: '*'
+      - httpApi: "*"
+
+package:
+  individually: true
+  patterns:
+    - "!venv/**"
+    - "!node_modules/**"
+    - "!.git/**"
+    - "!.serverless/**"
+    - "!__pycache__/**"
+    - "!tests/**"
 
 plugins:
   - serverless-python-requirements
 
 custom:
   pythonRequirements:
-    dockerizePip: non-linux
+    dockerizePip: true
+    # dockerImage: public.ecr.aws/sam/build-python3.10:latest-x86_64
+    slim: true
