@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from typing import List
 
-from backend.database import get_db
+from database import get_db
 from models.community import Post
 from schemas.community import PostResponse
 

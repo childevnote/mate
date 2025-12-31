@@ -1,6 +1,8 @@
 service: mate-backend
 frameworkVersion: "3"
 
+useDotenv: true
+
 provider:
   name: aws
   runtime: python3.10
@@ -8,6 +10,9 @@ provider:
   architecture: arm64
   httpApi:
     cors: true
+
+  environment:
+    DATABASE_URL: ${env:DATABASE_URL}
 
 functions:
   api:
@@ -18,18 +23,28 @@ functions:
 package:
   individually: true
   patterns:
-    - "!venv/**"
-    - "!node_modules/**"
+    - "lib/**"
     - "!.git/**"
     - "!.serverless/**"
+    - "!venv/**"
+    - "!node_modules/**"
     - "!__pycache__/**"
-    - "!tests/**"
+# plugins:
+#   - serverless-python-requirements
 
-plugins:
-  - serverless-python-requirements
+# custom:
+#   pythonRequirements:
+#     dockerizePip: true
+#     dockerImage: public.ecr.aws/sam/build-python3.10:latest-arm64
+#     layer: false
+#     zip: false
+#     slim: false
+#     strip: false
 
-custom:
-  pythonRequirements:
-    dockerizePip: true
-    # dockerImage: public.ecr.aws/sam/build-python3.10:latest-x86_64
-    slim: true
+# custom:
+#   pythonRequirements:
+#     dockerizePip: false
+#     layer: false
+#     slim: false
+#     strip: false
+#     zip: true
