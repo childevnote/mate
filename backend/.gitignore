@@ -1,3 +1,7 @@
 # dependencies
 /node_modules
 .serverless
+
+# virtualenv
+/venv
+/lib
