@@ -25,6 +25,14 @@ def create_post(
 def read_posts(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     return crud.get_posts(db, skip=skip, limit=limit)
 
+# 게시글 상세 조회 API
+@router.get("/posts/{post_id}", response_model=schemas.PostResponse)
+def read_post(post_id: int, db: Session = Depends(get_db)):
+    post = crud.get_post(db, post_id=post_id)
+    if not post:
+        raise HTTPException(status_code=404, detail="게시글을 찾을 수 없습니다.")
+    return post
+
 # 댓글 작성 API
 @router.post("/comments", response_model=schemas.CommentResponse)
 def create_comment(

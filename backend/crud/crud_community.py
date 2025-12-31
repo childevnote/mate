@@ -91,3 +91,15 @@ def get_my_scraps(db: Session, user_id: int, skip: int = 0, limit: int = 10):
         return []
     
     return user.scrapped_posts[::-1][skip : skip + limit]
+
+# 특정 글 조회 (조회수 1 증가 포함)
+def get_post(db: Session, post_id: int):
+    post = db.query(Post).filter(Post.id == post_id).first()
+    
+    if post:
+        # 조회수 1 증가
+        post.view_count += 1
+        db.commit()
+        db.refresh(post) # DB에서 변경된 값을 다시 가져옴
+        
+    return post

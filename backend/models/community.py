@@ -51,6 +51,14 @@ class Post(Base):
     @property
     def comment_count(self):
         return len(self.comments)
+    
+    @property
+    def like_count(self):
+        return len(self.liked_by)
+
+    @property
+    def scrap_count(self):
+        return len(self.scrapped_by)
 
     @property
     def author_nickname(self):

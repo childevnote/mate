@@ -21,7 +21,10 @@ class PostResponse(PostBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
     author_id: int
+    
     comment_count: int
+    like_count: int
+    scrap_count: int
     class Config:
         from_attributes = True
 
