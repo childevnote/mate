@@ -48,6 +48,22 @@ class Post(Base):
     liked_by = relationship("User", secondary=post_likes, backref="liked_posts")
     scrapped_by = relationship("User", secondary=post_scraps, backref="scrapped_posts")
 
+    @property
+    def comment_count(self):
+        return len(self.comments)
+
+    @property
+    def author_nickname(self):
+        if self.author:
+            return getattr(self.author, "nickname", self.author.email.split("@")[0])
+        return "알수없음"
+
+    @property
+    def author_university(self):
+        if self.author and hasattr(self.author, "university") and self.author.university:
+            return self.author.university.name
+        return "소속없음"
+
 
 class Comment(Base):
     __tablename__ = "comments"
@@ -71,3 +87,19 @@ class Comment(Base):
     
     # 대댓글 구조 (부모 -> 자식들)
     parent = relationship("Comment", remote_side=[id], backref="replies")
+
+    @property
+    def author_nickname(self):
+        if self.author:
+            return getattr(self.author, "nickname", self.author.email.split("@")[0])
+        return "알수없음"
+
+    @property
+    def author_university(self):
+        if self.author and hasattr(self.author, "university") and self.author.university:
+            return self.author.university.name
+        return "소속없음"
+
+    @property
+    def reply_count(self):
+        return len(self.replies)
