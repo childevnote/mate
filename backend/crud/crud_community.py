@@ -76,3 +76,18 @@ def toggle_scrap(db: Session, post_id: int, user_id: int):
         
     db.commit()
     return {"action": action}
+
+# 내가 쓴 글 조회
+def get_my_posts(db: Session, user_id: int, skip: int = 0, limit: int = 10):
+    return db.query(Post)\
+        .filter(Post.author_id == user_id)\
+        .order_by(Post.created_at.desc())\
+        .offset(skip).limit(limit).all()
+
+# 내가 스크랩한 글 조회
+def get_my_scraps(db: Session, user_id: int, skip: int = 0, limit: int = 10):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        return []
+    
+    return user.scrapped_posts[::-1][skip : skip + limit]
