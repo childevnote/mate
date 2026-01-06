@@ -7,21 +7,21 @@ import { PasswordChangeRequest, UserActionResponse } from "@/types/user";
 export const userService = {
   getMyPosts: async (userId: number): Promise<Post[]> => {
     const { data } = await api.get<PaginatedResponse<Post>>(
-      `/api/community/posts/?author=${userId}`
+      `/api/v1/community/posts/?author=${userId}`
     );
     return data.results;
   },
 
   getMyComments: async (userId: number): Promise<IComment[]> => {
     const { data } = await api.get<IComment[]>(
-      `/api/community/comments/?author=${userId}`
+      `/api/v1/community/comments/?author=${userId}`
     );
     return data;
   },
 
   getScrappedPosts: async (): Promise<Post[]> => {
     const { data } = await api.get<PaginatedResponse<Post>>(
-      `/api/community/posts/scrapped/`
+      `/api/v1/community/posts/scrapped/`
     );
     return data.results;
   },

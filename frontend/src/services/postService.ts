@@ -9,28 +9,28 @@ export const postService = {
     }
 
     const response = await api.get(
-      `/api/community/posts/?${params.toString()}`
+      `/api/v1/community/posts/?${params.toString()}`
     );
     return response.data;
   },
 
   createPost: async (formData: FormData) => {
-    const response = await api.post("/api/community/posts/", formData);
+    const response = await api.post("/api/v1/community/posts/", formData);
     return response.data;
   },
 
   getPostDetail: async (id: number) => {
-    const response = await api.get(`/api/community/posts/${id}/`);
+    const response = await api.get(`/api/v1/community/posts/${id}/`);
     return response.data;
   },
 
   updatePost: async (id: number, formData: FormData) => {
-    const response = await api.put(`/api/community/posts/${id}/`, formData);
+    const response = await api.put(`/api/v1/community/posts/${id}/`, formData);
     return response.data;
   },
 
   deletePost: async (id: number) => {
-    await api.delete(`/api/community/posts/${id}/`);
+    await api.delete(`/api/v1/community/posts/${id}/`);
   },
 
   login: async (email: string, password: string) => {
@@ -39,7 +39,7 @@ export const postService = {
   },
 
   getComments: async (postId: number) => {
-    const { data } = await api.get(`/api/community/comments/?post=${postId}`);
+    const { data } = await api.get(`/api/v1/community/comments/?post=${postId}`);
     return data;
   },
 
@@ -48,7 +48,7 @@ export const postService = {
     content: string,
     parentId: number | null = null
   ) => {
-    const { data } = await api.post("/api/community/comments/", {
+    const { data } = await api.post("/api/v1/community/comments/", {
       post: postId,
       content,
       parent: parentId,
@@ -57,6 +57,6 @@ export const postService = {
   },
 
   deleteComment: async (commentId: number) => {
-    await api.delete(`/api/community/comments/${commentId}/`);
+    await api.delete(`/api/v1/community/comments/${commentId}/`);
   },
 };
