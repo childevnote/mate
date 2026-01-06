@@ -32,8 +32,9 @@ package:
 # plugins:
 #   - serverless-python-requirements
 
-# custom:
-#   pythonRequirements:
+custom:
+  pythonRequirements:
+      pythonBin: python
 #     dockerizePip: true
 #     dockerImage: public.ecr.aws/sam/build-python3.10:latest-arm64
 #     layer: false
