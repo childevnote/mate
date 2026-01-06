@@ -7,7 +7,6 @@ provider:
   name: aws
   runtime: python3.9
   region: ap-northeast-2
-  architecture: arm64
   httpApi:
     cors: true
 
@@ -29,23 +28,15 @@ package:
     - "!venv/**"
     - "!node_modules/**"
     - "!__pycache__/**"
-# plugins:
-#   - serverless-python-requirements
+
+plugins:
+  - serverless-python-requirements
 
 custom:
   pythonRequirements:
-    pythonBin: python
-#     dockerizePip: true
-#     dockerImage: public.ecr.aws/sam/build-python3.10:latest-arm64
-#     layer: false
-#     zip: false
-#     slim: false
-#     strip: false
-
-# custom:
-#   pythonRequirements:
-#     dockerizePip: false
-#     layer: false
-#     slim: false
-#     strip: false
-#     zip: true
+    pythonBin: python 
+    dockerizePip: false
+    layer: false
+    slim: false
+    strip: false
+    zip: true
