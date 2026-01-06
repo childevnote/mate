@@ -10,24 +10,28 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+
+    defaults:
+      run:
+        working-directory: ./backend
+
     steps:
-    - name: Checkout code (코드 가져오기)
+    - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Setup Python (파이썬 설치)
+    - name: Setup Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.9'
+        python-version: '3.9' 
 
-    - name: Install Serverless Framework (서버리스 프레임워크 설치)
+    - name: Install Serverless Framework
       run: npm install -g serverless
 
-    - name: Install Python Dependencies (라이브러리 설치)
+    - name: Install Python Dependencies
       run: |
         pip install -r requirements.txt
 
-    - name: Deploy to AWS Lambda (배포 실행)
+    - name: Deploy to AWS Lambda
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -36,5 +40,4 @@ jobs:
         ALGORITHM: ${{ secrets.ALGORITHM }}
         ACCESS_TOKEN_EXPIRE_MINUTES: ${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}
         REFRESH_TOKEN_EXPIRE_DAYS: ${{ secrets.REFRESH_TOKEN_EXPIRE_DAYS }}
-        
       run: serverless deploy
