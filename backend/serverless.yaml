@@ -37,6 +37,6 @@ custom:
     pythonBin: python 
     dockerizePip: false
     layer: false
-    slim: false
+    slim: true
     strip: false
-    zip: true
+    zip: false
