@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = "http://127.0.0.1:8000";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL
 
 export const api = axios.create({
   baseURL: BASE_URL,
@@ -40,7 +40,6 @@ api.interceptors.response.use(
         }
 
         // 백엔드에 토큰 갱신 요청
-        // (Django SimpleJWT 기본 엔드포인트가 /api/token/refresh/ 라고 가정)
         const { data } = await axios.post(`${BASE_URL}/api/token/refresh/`, {
           refresh: refreshToken,
         });
