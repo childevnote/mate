@@ -326,7 +326,7 @@ function CommentList({ comments }: CommentListProps) {
       {comments.map((comment) => (
         <Link
           key={comment.id}
-          href={`/posts/${comment.post}`}
+          href={`/posts/${comment.post_id}`}
           className="block p-5 bg-white border border-gray-100 rounded-xl hover:bg-gray-50 hover:border-gray-200 transition duration-200"
         >
           <p className="text-gray-800 mb-3 line-clamp-2 leading-relaxed">
