@@ -4,9 +4,10 @@ from datetime import datetime
 
 # 공통 속성
 class UserBase(BaseModel):
-    email: EmailStr
+    email: Optional[EmailStr] = None 
     username: str
     nickname: str
+    university: Optional[str] = None
 
 # 회원가입 요청 (Client -> Server)
 class UserCreate(UserBase):
@@ -18,7 +19,7 @@ class UserResponse(UserBase):
     is_active: bool
     is_student_verified: bool
     date_joined: datetime
-    # university: Optional[str] = None
+
 
     class Config:
         from_attributes = True
@@ -26,7 +27,6 @@ class UserResponse(UserBase):
 class CheckCodeRequest(BaseModel):
     email: EmailStr
     code: str
-
 
 class ChangePasswordRequest(BaseModel):
     old_password: str
