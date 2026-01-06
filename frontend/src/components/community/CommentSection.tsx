@@ -30,8 +30,8 @@ export default function CommentSection({ postId }: CommentSectionProps) {
       const node = map.get(c.id);
       if (!node) return;
 
-      if (c.parent) {
-        const parentNode = map.get(c.parent);
+      if (c.parent_id) {
+        const parentNode = map.get(c.parent_id);
         if (parentNode) {
           parentNode.children?.push(node);
         }

@@ -32,7 +32,7 @@ export default function CommentItem({
     <div className="flex flex-col">
       <div
         className={`flex gap-3 p-3 rounded-lg hover:bg-gray-50 transition ${
-          comment.parent ? "ml-8 bg-gray-50/50 border-l-2 border-gray-200" : ""
+          comment.parent_id ? "ml-8 bg-gray-50/50 border-l-2 border-gray-200" : ""
         }`}
       >
         <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-xs font-bold text-gray-500 shrink-0">
