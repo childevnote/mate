@@ -11,7 +11,7 @@ export const authService = {
   },
 
   register: async (signupData: SignupRequest) => {
-    const response = await api.post("/api/v1/users/signup/", signupData);
+    const response = await api.post("/api/v1/users/register/", signupData);
     return response.data;
   },
 
