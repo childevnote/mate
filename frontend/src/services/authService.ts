@@ -5,18 +5,18 @@ import { CheckUsernameResponse } from "@/types/auth";
 export const authService = {
   checkUsername: async (username: string) => {
     const response = await api.get<CheckUsernameResponse>(
-      `/api/users/check-username/?username=${username}`
+      `/api/v1/users/check-username/?username=${username}`
     );
     return response.data;
   },
 
   register: async (signupData: SignupRequest) => {
-    const response = await api.post("/api/users/signup/", signupData);
+    const response = await api.post("/api/v1/users/signup/", signupData);
     return response.data;
   },
 
   login: async (username: string, password: string) => {
-    const response = await api.post<LoginResponse>("/api/users/login/", {
+    const response = await api.post<LoginResponse>("/api/v1/users/login/", {
       username,
       password,
     });

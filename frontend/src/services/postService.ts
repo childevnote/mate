@@ -9,13 +9,13 @@ export const postService = {
     }
 
     const response = await api.get(
-      `/api/v1/community/posts/?${params.toString()}`
+      `/api/v1/community/posts?${params.toString()}`
     );
     return response.data;
   },
 
   createPost: async (formData: FormData) => {
-    const response = await api.post("/api/v1/community/posts/", formData);
+    const response = await api.post("/api/v1/community/posts", formData);
     return response.data;
   },
 
@@ -34,12 +34,12 @@ export const postService = {
   },
 
   login: async (email: string, password: string) => {
-    const response = await api.post("/api/users/login/", { email, password });
+    const response = await api.post("/api/v1/users/login/", { email, password });
     return response.data;
   },
 
   getComments: async (postId: number) => {
-    const { data } = await api.get(`/api/v1/community/comments/?post=${postId}`);
+    const { data } = await api.get(`/api/v1/community/comments?post=${postId}`);
     return data;
   },
 
