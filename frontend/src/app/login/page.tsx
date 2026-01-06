@@ -4,35 +4,46 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSetAtom } from "jotai";
 import { userAtom } from "@/store/authStore";
-import { authService } from "@/services/authService"; // 서비스 계층 사용
+import { authService } from "@/services/authService";
+import { api } from "@/lib/axios"; 
 import Link from "next/link";
-import axios from "axios"; // 타입 가드를 위해 import
+import axios from "axios";
 
 export default function LoginPage() {
   const router = useRouter();
   const setUser = useSetAtom(userAtom);
 
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState(""); 
   const [password, setPassword] = useState("");
-  const [errorMsg, setErrorMsg] = useState(""); // 에러 메시지 UI 표시용
+  const [errorMsg, setErrorMsg] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
 
     try {
-      const data = await authService.login(username, password);
-      const { access, refresh, user } = data;
+      // 로그인 요청 (토큰 발급)
+      const data = await authService.login(email, password);
+      
+      const { access_token, refresh_token } = data; // 필드명 확인 (access_token)
 
-      localStorage.setItem("access_token", access);
-      localStorage.setItem("refresh_token", refresh);
+      // 토큰 저장
+      localStorage.setItem("accessToken", access_token);
+      if (refresh_token) {
+        localStorage.setItem("refreshToken", refresh_token);
+      }
 
+      // 토큰을 이용해 '내 정보' 가져오기
+      const userResponse = await api.get("/users/me");
+      const user = userResponse.data;
+
+      // 상태 저장 (Jotai)
       setUser({
         id: user.id,
-        username: user.username,
+        username: user.email, // 프론트엔드 모델에 맞춰 매핑
         nickname: user.nickname,
         university: user.university || undefined,
-        email: user.email || undefined,
+        email: user.email,
       });
 
       router.push("/");
@@ -66,13 +77,13 @@ export default function LoginPage() {
         <form onSubmit={handleLogin} className="space-y-5">
           <div>
             <label className="block text-sm font-bold text-foreground mb-1">
-              아이디
+              이메일 (아이디)
             </label>
             <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="아이디를 입력하세요"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="이메일을 입력하세요"
               className="w-full p-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:outline-none bg-background text-foreground transition-all"
               required
             />

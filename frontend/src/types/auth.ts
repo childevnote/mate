@@ -4,12 +4,13 @@ export interface User {
   nickname: string;
   university?: string | null;
   email?: string | null;
+  is_active?: boolean;
 }
 
 export interface LoginResponse {
-  access: string;
-  refresh: string;
-  user: User;
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
 }
 
 export interface CheckUsernameResponse {
@@ -21,13 +22,6 @@ export interface RegisterResponse {
   user: User;
   message: string;
 }
-
-export interface LoginResponse {
-  access: string;
-  refresh: string;
-  user: User;
-}
-
 export interface SignupRequest {
   username: string;
   password: string;
