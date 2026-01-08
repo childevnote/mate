@@ -31,4 +31,13 @@ app.include_router(login.router, prefix="/api/v1/auth", tags=["auth"])
 def health_check():
     return {"message": "FastAPI Server is Running"}
 
-handler = Mangum(app)
+mangum_handler = Mangum(app)
+
+def handler(event, context):
+    # AWS EventBridge(CloudWatch Events)가 보내는 신호인지 확인
+    if event.get("source") == "aws.events" and event.get("detail-type") == "Scheduled Event":
+        print("Warmer ping received. Skipping application logic.")
+        return {"statusCode": 200, "body": "pong"}
+
+    # 그게 아니라면(진짜 유저의 HTTP 요청), FastAPI(Mangum)에게 넘긴다.
+    return mangum_handler(event, context)
