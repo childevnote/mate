@@ -13,7 +13,7 @@ export default function LoginPage() {
   const router = useRouter();
   const setUser = useSetAtom(userAtom);
 
-  const [email, setEmail] = useState(""); 
+  const [username, setUsername] = useState(""); 
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -22,10 +22,9 @@ export default function LoginPage() {
     setErrorMsg("");
 
     try {
-      // 로그인 요청 (토큰 발급)
-      const data = await authService.login(email, password);
+      const data = await authService.login(username, password);
       
-      const { access_token, refresh_token } = data; // 필드명 확인 (access_token)
+      const { access_token, refresh_token } = data;
 
       // 토큰 저장
       localStorage.setItem("accessToken", access_token);
@@ -37,13 +36,13 @@ export default function LoginPage() {
       const userResponse = await api.get("/users/me");
       const user = userResponse.data;
 
-      // 상태 저장 (Jotai)
+      // 상태 저장 (Jotai) 매핑 수정
       setUser({
         id: user.id,
-        username: user.email, // 프론트엔드 모델에 맞춰 매핑
+        username: user.username,
         nickname: user.nickname,
         university: user.university || undefined,
-        email: user.email,
+        email: user.email || undefined
       });
 
       router.push("/");
@@ -77,13 +76,13 @@ export default function LoginPage() {
         <form onSubmit={handleLogin} className="space-y-5">
           <div>
             <label className="block text-sm font-bold text-foreground mb-1">
-              이메일 (아이디)
+              아이디
             </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="이메일을 입력하세요"
+\            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="아이디를 입력하세요"
               className="w-full p-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:outline-none bg-background text-foreground transition-all"
               required
             />
