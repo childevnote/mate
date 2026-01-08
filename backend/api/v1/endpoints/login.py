@@ -16,17 +16,15 @@ def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
 ):
-    user = db.query(User).filter(User.email == form_data.username).first()
+    user = db.query(User).filter(User.username == form_data.username).first()
     
     # 유저가 없거나 비밀번호가 틀리면 401 에러
     if not user or not security.verify_password(form_data.password, user.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="이메일 또는 비밀번호가 올바르지 않습니다.",
+            detail="아이디 또는 비밀번호가 올바르지 않습니다.", # 메시지도 수정
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
-    # ✅ [수정] 토큰 2개 생성 (Access + Refresh)
     access_token = security.create_access_token(subject=user.id)
     refresh_token = security.create_refresh_token(subject=user.id)
     

@@ -5,21 +5,31 @@ import { CheckUsernameResponse } from "@/types/auth";
 export const authService = {
   checkUsername: async (username: string) => {
     const response = await api.get<CheckUsernameResponse>(
-      `/api/v1/users/check-username/?username=${username}`
+      `/api/v1/users/check-username?username=${username}`
     );
     return response.data;
   },
 
   register: async (signupData: SignupRequest) => {
-    const response = await api.post("/api/v1/users/register/", signupData);
+    const response = await api.post("/api/v1/users/register", signupData);
     return response.data;
   },
 
   login: async (username: string, password: string) => {
-    const response = await api.post<LoginResponse>("/api/v1/users/login/", {
-      username,
-      password,
-    });
+    const formData = new URLSearchParams();
+    formData.append("username", username);
+    formData.append("password", password);
+
+    const response = await api.post<LoginResponse>(
+      "/api/v1/auth/login", 
+      formData,
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
+
     if (response.data.access_token) {
       localStorage.setItem("accessToken", response.data.access_token);
     }
