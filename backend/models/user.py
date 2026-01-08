@@ -20,7 +20,7 @@ class User(Base):
     # 기본 정보
     username = Column(String, unique=True, index=True, nullable=False) # 아이디
     password = Column(String, nullable=False)
-    email = Column(String, unique=True, index=True, nullable=False)
+    email = Column(String, unique=True, index=True, nullable=True)
     nickname = Column(String, unique=True, nullable=False)
     
     # 상태
