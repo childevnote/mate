@@ -9,6 +9,7 @@ import { Post } from "@/types/post";
 import Link from "next/link";
 import CommentSection from "@/components/community/CommentSection";
 import { PostDetailProps } from "@/types/post";
+import { CATEGORY_LABELS } from "@/types/category";
 
 export default function PostDetail({ postId }: PostDetailProps) {
   const router = useRouter();
@@ -21,7 +22,7 @@ export default function PostDetail({ postId }: PostDetailProps) {
     isLoading,
     isError,
   } = useQuery<Post>({
-    queryKey: ["post", postId], // postId가 바뀌면 데이터도 바뀜
+    queryKey: ["post", postId], 
     queryFn: () => postService.getPostDetail(postId),
   });
 
@@ -29,8 +30,8 @@ export default function PostDetail({ postId }: PostDetailProps) {
     mutationFn: postService.deletePost,
     onSuccess: () => {
       alert("게시글이 삭제되었습니다.");
-      queryClient.invalidateQueries({ queryKey: ["posts"] }); // 목록 새로고침
-      router.push("/"); // 메인으로 쫓아내기
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      router.push("/");
     },
     onError: (err) => {
       console.error(err);
@@ -60,14 +61,15 @@ export default function PostDetail({ postId }: PostDetailProps) {
     );
 
   const isAuthor = user?.nickname === post.author_nickname;
+  
+  const categoryLabel = CATEGORY_LABELS[post.category] || post.category;
 
   return (
     <article className="bg-background rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      {/* 1. 헤더: 카테고리, 제목, 작성자 */}
       <div className="p-6 border-b border-gray-100">
         <div className="flex justify-between items-center mb-4">
           <span className="bg-primary/5 text-primary text-xs font-bold px-2.5 py-1 rounded">
-            {post.category}
+            {categoryLabel}
           </span>
           <span className="text-sm text-muted-foreground">
             {new Date(post.created_at).toLocaleString()}
@@ -80,15 +82,14 @@ export default function PostDetail({ postId }: PostDetailProps) {
 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center font-bold text-muted-foreground">
-              {post.author_nickname[0]}
+            <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center font-bold text-muted-foreground overflow-hidden">
+              {post.author_nickname?.[0] || "?"}
             </div>
             <span className="font-medium text-gray-700">
-              {post.author_nickname}
+              {post.author_nickname || "알 수 없는 사용자"}
             </span>
           </div>
 
-          {/* 🔥 수정된 부분: 댓글 수 표시 추가 */}
           <div className="flex gap-3 text-sm text-muted-foreground">
             <span>조회 {post.view_count}</span>
             <span>좋아요 {post.like_count}</span>
@@ -97,7 +98,6 @@ export default function PostDetail({ postId }: PostDetailProps) {
         </div>
       </div>
 
-      {/* 2. 본문 영역 */}
       <div className="p-6 min-h-[300px]">
         {post.image && (
           <div className="mb-6 rounded-lg overflow-hidden bg-background border border-gray-100">
@@ -109,13 +109,11 @@ export default function PostDetail({ postId }: PostDetailProps) {
             />
           </div>
         )}
-        {/* 줄바꿈 처리를 위해 whitespace-pre-wrap 사용 */}
         <p className="whitespace-pre-wrap leading-relaxed text-gray-800">
           {post.content}
         </p>
       </div>
 
-      {/* 3. 하단 버튼 영역 */}
       <div className="p-6 bg-background flex justify-between items-center border-t border-gray-100">
         <Link
           href="/"
