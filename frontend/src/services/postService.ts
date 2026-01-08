@@ -1,12 +1,13 @@
 import { api } from "@/lib/axios";
 
 export const postService = {
-  getPosts: async (page = 1, search = "") => {
+  getPosts: async (page = 1, search = "", category = "", sort = "latest") => {
     const params = new URLSearchParams();
     params.append("page", page.toString());
-    if (search) {
-      params.append("search", search);
-    }
+    
+    if (search) params.append("search", search);
+    if (category) params.append("category", category);
+    if (sort) params.append("sort", sort);
 
     const response = await api.get(
       `/api/v1/community/posts?${params.toString()}`
