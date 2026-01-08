@@ -13,7 +13,7 @@ export default function PostCard({ post, showCategory = true }: PostCardProps) {
 
   return (
     <Link href={`/posts/${post.id}`} className="block group">
-      <div className="flex items-center justify-between py-3 px-2 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer min-h-[50px]">
+      <div className="flex items-center justify-between py-3 px-2 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer min-h-[50px] rounded-lg">
         
         {/* 왼쪽: 카테고리 + 제목 */}
         <div className="flex items-center gap-3 overflow-hidden">

@@ -5,14 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import { postService } from "@/services/postService";
 import PostCard from "@/components/community/PostCard";
 import { Post } from "@/types/post";
+import { PostSectionProps } from "@/types/post";
 
-interface PostSectionProps {
-  title: string;
-  icon: string;
-  category?: string; 
-  sort?: string;     
-  link?: string;     
-}
 
 export default function PostSection({
   title,

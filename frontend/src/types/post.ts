@@ -26,3 +26,11 @@ export interface PostListResponse {
   previous: string | null;
   results: Post[];
 }
+
+export interface PostSectionProps {
+  title: string;
+  icon: string;
+  category?: string; 
+  sort?: string;     
+  link?: string;     
+}
