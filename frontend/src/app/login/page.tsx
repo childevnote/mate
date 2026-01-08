@@ -78,7 +78,7 @@ export default function LoginPage() {
             <label className="block text-sm font-bold text-foreground mb-1">
               아이디
             </label>
-\            <input
+            <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
