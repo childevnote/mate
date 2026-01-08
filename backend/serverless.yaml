@@ -18,6 +18,7 @@ functions:
     handler: main.handler
     events:
       - httpApi: "*"
+      - schedule: rate(5 minutes)
 
 package:
   individually: true

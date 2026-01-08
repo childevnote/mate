@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from models.community import Post, Comment
 from schemas.community import PostCreate, CommentCreate
 from models.user import User
@@ -16,14 +16,18 @@ def create_post(db: Session, post: PostCreate, user_id: int):
     db.refresh(db_post)
     return db_post
 
+# [최적화] 작성자 정보를 미리 가져오기 (joinedload)
 def get_posts(db: Session, skip: int = 0, limit: int = 10):
-    return db.query(Post).offset(skip).limit(limit).all()
+    return db.query(Post)\
+        .options(joinedload(Post.author))\
+        .order_by(Post.created_at.desc())\
+        .offset(skip).limit(limit).all()
 
 def create_comment(db: Session, comment: CommentCreate, user_id: int):
     db_comment = Comment(
         content=comment.content,
         post_id=comment.post_id,
-        parent_id=comment.parent_id, # 대댓글이면 ID 들어감
+        parent_id=comment.parent_id, 
         author_id=user_id
     )
     db.add(db_comment)
@@ -31,35 +35,33 @@ def create_comment(db: Session, comment: CommentCreate, user_id: int):
     db.refresh(db_comment)
     return db_comment
 
+# [최적화] 댓글 작성자 정보도 미리 로딩
 def get_comments_by_post(db: Session, post_id: int, skip: int = 0, limit: int = 50):
     return db.query(Comment)\
+        .options(joinedload(Comment.author))\
         .filter(Comment.post_id == post_id)\
         .order_by(Comment.created_at.asc())\
         .offset(skip).limit(limit).all()
 
-
-# 좋아요 토글 (ON/OFF)
+# 좋아요 토글
 def toggle_like(db: Session, post_id: int, user_id: int):
     post = db.query(Post).filter(Post.id == post_id).first()
     if not post:
         return None
     
-    # 현재 유저 객체 가져오기
     user = db.query(User).filter(User.id == user_id).first()
     
-    # 이미 좋아요를 눌렀는지 확인 (Relationship 이용)
     if user in post.liked_by:
-        post.liked_by.remove(user) # 취소
+        post.liked_by.remove(user)
         action = "unliked"
     else:
-        post.liked_by.append(user) # 추가
+        post.liked_by.append(user) 
         action = "liked"
         
     db.commit()
-    # 갱신된 좋아요 개수 반환
     return {"action": action, "count": len(post.liked_by)}
 
-# 스크랩 토글 (ON/OFF)
+# 스크랩 토글
 def toggle_scrap(db: Session, post_id: int, user_id: int):
     post = db.query(Post).filter(Post.id == post_id).first()
     if not post:
@@ -77,29 +79,35 @@ def toggle_scrap(db: Session, post_id: int, user_id: int):
     db.commit()
     return {"action": action}
 
-# 내가 쓴 글 조회
+# 내가 쓴 글 조회 (최신순 정렬 추가)
 def get_my_posts(db: Session, user_id: int, skip: int = 0, limit: int = 10):
     return db.query(Post)\
+        .options(joinedload(Post.author))\
         .filter(Post.author_id == user_id)\
         .order_by(Post.created_at.desc())\
         .offset(skip).limit(limit).all()
 
 # 내가 스크랩한 글 조회
 def get_my_scraps(db: Session, user_id: int, skip: int = 0, limit: int = 10):
-    user = db.query(User).filter(User.id == user_id).first()
+    user = db.query(User)\
+        .options(joinedload(User.scrapped_posts).joinedload(Post.author))\
+        .filter(User.id == user_id).first()
+    
     if not user:
         return []
     
+    # Python 리스트 슬라이싱 (데이터 많아지면 쿼리로 바꾸는 게 좋지만 일단 유지)
     return user.scrapped_posts[::-1][skip : skip + limit]
 
-# 특정 글 조회 (조회수 1 증가 포함)
+# [최적화] 상세 조회시에도 작성자 정보 미리 로딩
 def get_post(db: Session, post_id: int):
-    post = db.query(Post).filter(Post.id == post_id).first()
+    post = db.query(Post)\
+        .options(joinedload(Post.author))\
+        .filter(Post.id == post_id).first()
     
     if post:
-        # 조회수 1 증가
         post.view_count += 1
         db.commit()
-        db.refresh(post) # DB에서 변경된 값을 다시 가져옴
+        db.refresh(post)
         
     return post

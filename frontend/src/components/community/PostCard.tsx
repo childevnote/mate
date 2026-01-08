@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { Post } from "@/types/post";
+import Image from "next/image";
 
 interface PostCardProps {
   post: Post;
 }
 
 export default function PostCard({ post }: PostCardProps) {
+
+  const hasValidImage = post.image && post.image !== "string" && post.image.trim() !== "";
   return (
     <Link href={`/posts/${post.id}`}>
       <div className="bg-background p-5 rounded-xl shadow-sm border border-gray-100 hover:border-primary/40 hover:shadow-md transition-all cursor-pointer h-full flex flex-col justify-between group">
@@ -23,17 +26,20 @@ export default function PostCard({ post }: PostCardProps) {
             {post.title}
           </h3>
 
-          {/* 이미지가 있다면 미리보기 (선택 사항) */}
-          {post.image && (
-            <div className="mb-3 h-32 w-full bg-gray-100 rounded-lg overflow-hidden relative">
-              {/* Next/Image 사용 권장하지만, 초기엔 img 태그로 빠르게 구현 */}
-              <img
-                src={post.image}
-                alt="preview"
-                className="object-cover w-full h-full"
-              />
-            </div>
-          )}
+          {/* [수정 포인트] 이미지가 유효할 때만 렌더링 */}
+        {hasValidImage ? (
+          <div className="relative h-48 w-full bg-gray-100 overflow-hidden">
+            <Image 
+              src={post.image!}
+              alt={post.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+          </div>
+        ) : (
+          <div className="h-48 w-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400">
+            <span className="text-sm">이미지 없음</span>
+          </div>
+        )}
         </div>
 
         <div className="flex items-center justify-between mt-4 text-sm text-muted-foreground pt-4 border-t border-gray-50">
