@@ -22,8 +22,17 @@ def create_post(
 
 # 게시글 목록 조회 (누구나 볼 수 있음 - 자물쇠 없음)
 @router.get("/posts", response_model=List[schemas.PostResponse])
-def read_posts(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    return crud.get_posts(db, skip=skip, limit=limit)
+def read_posts(
+    skip: int = 0, 
+    limit: int = 10, 
+    sort: str = "latest", # sort 옵션 추가 (latest, best)
+    category: str = None, # category 옵션 추가
+    db: Session = Depends(get_db)
+):
+    if sort == "best":
+        return crud.get_best_posts(db, limit=limit)
+    
+    return crud.get_posts(db, skip=skip, limit=limit, category=category)
 
 # 게시글 상세 조회 API
 @router.get("/posts/{post_id}", response_model=schemas.PostResponse)

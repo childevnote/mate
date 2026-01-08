@@ -16,12 +16,28 @@ def create_post(db: Session, post: PostCreate, user_id: int):
     db.refresh(db_post)
     return db_post
 
+def get_best_posts(db: Session, limit: int = 5):
+    candidates = db.query(Post)\
+        .options(joinedload(Post.author), joinedload(Post.comments), joinedload(Post.liked_by))\
+        .filter(Post.created_at >= func.now() - func.interval('7 days'))\
+        .limit(100).all() # 최근 7일 글 중 100개를 후보로 가져옴
+    def calculate_score(post):
+        return post.view_count + len(post.liked_by) + len(post.comments)
+
+    # 점수 높은 순 정렬 후 limit만큼 자르기
+    sorted_posts = sorted(candidates, key=calculate_score, reverse=True)
+    return sorted_posts[:limit]
+
 # [최적화] 작성자 정보를 미리 가져오기 (joinedload)
-def get_posts(db: Session, skip: int = 0, limit: int = 10):
-    return db.query(Post)\
+def get_posts(db: Session, skip: int = 0, limit: int = 10, category: str = None):
+    query = db.query(Post)\
         .options(joinedload(Post.author))\
-        .order_by(Post.created_at.desc())\
-        .offset(skip).limit(limit).all()
+        .order_by(Post.created_at.desc())
+    
+    if category:
+        query = query.filter(Post.category == category)
+        
+    return query.offset(skip).limit(limit).all()
 
 def create_comment(db: Session, comment: CommentCreate, user_id: int):
     db_comment = Comment(
