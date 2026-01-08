@@ -33,7 +33,7 @@ export default function LoginPage() {
       }
 
       // 토큰을 이용해 '내 정보' 가져오기
-      const userResponse = await api.get("/users/me");
+      const userResponse = await api.get("/api/v1/users/me");
       const user = userResponse.data;
 
       // 상태 저장 (Jotai) 매핑 수정
