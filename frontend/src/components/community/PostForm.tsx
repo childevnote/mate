@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { CATEGORY_OPTIONS } from "@/types/category";
+
 interface PostFormData {
   title: string;
   content: string;
@@ -53,15 +55,17 @@ export default function PostForm({
           카테고리
         </label>
         <select
-          aria-label="카테고리 선택"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-primary transition"
-        >
-          <option value="FREE">자유게시판</option>
-          <option value="INFO">정보게시판</option>
-          <option value="GATHERING">모임게시판</option>
-        </select>
+  aria-label="카테고리 선택"
+  value={category}
+  onChange={(e) => setCategory(e.target.value)}
+  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-primary transition"
+>
+  {CATEGORY_OPTIONS.map((option) => (
+    <option key={option.value} value={option.value}>
+      {option.label}게시판
+    </option>
+  ))}
+</select>
       </div>
 
       {/* 2. 제목 입력 */}

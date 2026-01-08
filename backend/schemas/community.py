@@ -1,11 +1,21 @@
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional
+from enum import Enum
+
+class CategoryType(str, Enum):
+    INFO = "INFO"         # 정보
+    FREE = "FREE"         # 자유
+    PROMO = "PROMO"       # 홍보
+    QUESTION = "QUESTION" # 질문
+    HUMOR = "HUMOR"       # 유머
+    STUDY = "STUDY"       # 스터디
+    MARKET = "MARKET"     # 장터
 
 class PostBase(BaseModel):
     title: str
     content: str
-    category: str = "FREE"
+    category: CategoryType
     image: Optional[str] = None
 
 class PostCreate(PostBase):
