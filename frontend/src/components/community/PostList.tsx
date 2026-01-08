@@ -16,7 +16,7 @@ export default function PostList() {
     placeholderData: (previousData) => previousData,
   });
 
-  const posts = data?.results || [];
+  const posts = Array.isArray(data) ? data : [];
 
   if (isLoading) {
     return (
@@ -47,7 +47,7 @@ export default function PostList() {
         </h2>
         <span className="text-sm text-muted-foreground">
           {/* data.count가 없으면 0으로 처리 */}
-          총 <span className="font-bold text-primary">{data?.count || 0}</span>개의 이야기
+            총 <span className="font-bold text-primary">{posts.length}</span>개의 이야기        
         </span>
       </div>
 
