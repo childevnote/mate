@@ -2,7 +2,6 @@
 
 import React from "react";
 import PostDetail from "@/components/community/PostDetail";
-
 interface PageProps {
   params: Promise<{ id: string }>;
 }

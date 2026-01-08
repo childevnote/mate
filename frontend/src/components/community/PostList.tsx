@@ -1,74 +1,97 @@
-'use client'
+"use client";
 
-import { useQuery } from '@tanstack/react-query';
-import { useSearchParams } from 'next/navigation';
-import { postService } from '@/services/postService';
-import PostCard from './PostCard';
-import { PostListResponse } from '@/types/post';
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "next/navigation";
+import { postService } from "@/services/postService";
+import PostCard from "@/components/community/PostCard";
+import { Post } from "@/types/post";
 
 export default function PostList() {
   const searchParams = useSearchParams();
-  const searchKeyword = searchParams.get('search') || '';
+  
+  // URL 파라미터 가져오기
+  const category = searchParams.get("category") || "";
+  const sort = searchParams.get("sort") || "latest";
+  const search = searchParams.get("search") || "";
+  
+  // 페이지 상태 관리
+  const [page, setPage] = useState(1);
 
-  const { data, isLoading, isError } = useQuery<PostListResponse>({
-    queryKey: ['posts', searchKeyword],
-    queryFn: () => postService.getPosts(1, searchKeyword),
-    placeholderData: (previousData) => previousData,
+
+  // 데이터 요청
+  const { data: posts, isLoading, isError, isFetching } = useQuery<Post[]>({
+    queryKey: ["posts", category, sort, search, page],
+    queryFn: () => postService.getPosts(page, search, category, sort),
+    placeholderData: (prev) => prev, // 로딩 중 깜빡임 방지
   });
 
-  const posts = Array.isArray(data) ? data : [];
+  const list = Array.isArray(posts) ? posts : [];
+  const isLastPage = list.length < 10;
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="h-40 bg-gray-100 animate-pulse rounded-xl"></div>
-        ))}
+      <div className="py-20 text-center text-gray-500">
+        목록을 불러오고 있습니다...
       </div>
     );
   }
 
   if (isError) {
     return (
-      <div className="py-20 text-center">
-        <p className="text-red-500 mb-2">데이터를 불러오지 못했습니다.</p>
-        <button onClick={() => window.location.reload()} className="text-sm underline text-muted-foreground">
-          새로고침
-        </button>
+      <div className="py-20 text-center text-red-500">
+        데이터를 불러오지 못했습니다.
+      </div>
+    );
+  }
+
+  if (list.length === 0) {
+    return (
+      <div className="py-32 text-center text-gray-400 bg-gray-50 rounded-lg mt-4 border border-dashed border-gray-200">
+        게시글이 없습니다.
       </div>
     );
   }
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row justify-between items-end mb-6 gap-2">
-        <h2 className="text-xl font-bold text-foreground">
-          {searchKeyword ? `'${searchKeyword}' 검색 결과` : '최근 올라온 글'}
-        </h2>
-        <span className="text-sm text-muted-foreground">
-          {/* data.count가 없으면 0으로 처리 */}
-            총 <span className="font-bold text-primary">{posts.length}</span>개의 이야기        
-        </span>
+      {/* 리스트 렌더링 */}
+      <div 
+        className={`divide-y divide-gray-100 border-b border-gray-100 transition-opacity duration-200 ${
+          isFetching ? "opacity-40 pointer-events-none" : "opacity-100"
+        }`}
+      >
+        {list.map((post) => (
+          <PostCard 
+            key={post.id} 
+            post={post} 
+            showCategory={!category} 
+          />
+        ))}
       </div>
 
-      {/* posts 변수는 무조건 배열이므로 length 체크가 안전함 */}
-      {posts.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {/* posts.map 사용 (data.results.map 보다 안전하고 깔끔함) */}
-          {posts.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-32 bg-background rounded-xl border border-dashed border-border">
-          <p className="text-muted-foreground text-lg">
-            {searchKeyword ? '검색 결과가 없습니다.' : '아직 등록된 게시글이 없습니다.'}
-          </p>
-          {searchKeyword && (
-            <p className="text-sm text-muted-foreground mt-2">다른 키워드로 검색해보세요.</p>
-          )}
-        </div>
-      )}
+      {/* 페이지네이션 (간단하게 이전/다음 버튼 구현) */}
+      <div className="flex justify-center items-center gap-4 mt-8 pb-8">
+        <button
+          onClick={() => setPage((old) => Math.max(old - 1, 1))}
+          disabled={page === 1 || isFetching} // 로딩 중 클릭 방지
+          className="px-4 py-2 border rounded-md text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          이전
+        </button>
+        
+        <span className="text-sm font-medium min-w-[60px] text-center">
+          {page} 페이지
+        </span>
+        
+        <button
+          onClick={() => setPage((old) => old + 1)}
+          disabled={isLastPage || isFetching} // 로딩 중 클릭 방지
+          className="px-4 py-2 border rounded-md text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          다음
+        </button>
+      </div>
     </div>
   );
 }

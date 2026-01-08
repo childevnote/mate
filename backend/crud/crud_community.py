@@ -2,6 +2,8 @@ from sqlalchemy.orm import Session, joinedload
 from models.community import Post, Comment
 from schemas.community import PostCreate, CommentCreate
 from models.user import User
+from sqlalchemy import func
+from datetime import timedelta
 
 def create_post(db: Session, post: PostCreate, user_id: int):
     db_post = Post(
@@ -16,12 +18,36 @@ def create_post(db: Session, post: PostCreate, user_id: int):
     db.refresh(db_post)
     return db_post
 
-# [최적화] 작성자 정보를 미리 가져오기 (joinedload)
-def get_posts(db: Session, skip: int = 0, limit: int = 10):
-    return db.query(Post)\
-        .options(joinedload(Post.author))\
-        .order_by(Post.created_at.desc())\
-        .offset(skip).limit(limit).all()
+def get_post_options():
+    return [
+        joinedload(Post.author).joinedload(User.university), # 작성자의 학교 정보까지 로딩
+        joinedload(Post.comments), # 댓글 로딩
+        joinedload(Post.liked_by)  # 좋아요 누른 사람 로딩
+    ]
+
+def get_best_posts(db: Session, skip: int = 0, limit: int = 5):
+    # 1. 최근 7일 게시글 후보군 가져오기
+    candidates = db.query(Post)\
+        .options(*get_post_options())\
+        .filter(Post.created_at >= func.now() - timedelta(days=7))\
+        .limit(100).all()
+
+    # 2. 점수 계산 (조회수 + 좋아요*3 + 댓글*5)
+    def calculate_score(post):
+        likes = len(post.liked_by) if post.liked_by else 0
+        comments = len(post.comments) if post.comments else 0
+        return post.view_count + (likes * 3) + (comments * 5)
+
+    # 3. 점수 높은 순 정렬
+    sorted_posts = sorted(candidates, key=calculate_score, reverse=True)
+    return sorted_posts[skip : skip + limit]
+
+def get_posts(db: Session, skip: int = 0, limit: int = 10, category: str = None):
+    query = db.query(Post).options(*get_post_options())
+    if category and category != "ALL":
+        query = query.filter(Post.category == category)
+        
+    return query.order_by(Post.created_at.desc()).offset(skip).limit(limit).all()
 
 def create_comment(db: Session, comment: CommentCreate, user_id: int):
     db_comment = Comment(
