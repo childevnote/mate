@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { postService } from "@/services/postService";
@@ -18,13 +18,27 @@ export default function PostList() {
   // 페이지 상태 관리
   const [page, setPage] = useState(1);
 
+  const startTime = useRef<number>(0);
+
 
   // 데이터 요청
   const { data: posts, isLoading, isError, isFetching } = useQuery<Post[]>({
     queryKey: ["posts", category, sort, search, page],
-    queryFn: () => postService.getPosts(page, search, category, sort),
-    placeholderData: (prev) => prev, // 로딩 중 깜빡임 방지
+    queryFn: () => {
+      startTime.current = performance.now();
+      return postService.getPosts(page, search, category, sort);
+    },
+    placeholderData: (prev) => prev,
   });
+
+  useEffect(() => {
+    if (!isFetching && startTime.current > 0) {
+      const endTime = performance.now();
+      const duration = endTime - startTime.current;
+      console.log(`[목록 로딩 완료] ${duration.toFixed(2)}ms`);
+    }
+  }, [isFetching]);
+
 
   const list = Array.isArray(posts) ? posts : [];
   const isLastPage = list.length < 10;

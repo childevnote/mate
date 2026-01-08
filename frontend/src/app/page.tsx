@@ -4,10 +4,12 @@ import { Suspense } from "react";
 import SearchBar from "@/components/community/SearchBar";
 import PostSection from "@/components/community/PostSection";
 import { CATEGORY_OPTIONS } from "@/types/category";
+import MainLoadLogger from "@/components/common/MainLoadLogger";
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
+      <MainLoadLogger />
       <main className="max-w-5xl mx-auto px-4 py-8">
         
         {/* 상단 검색창 (Suspense로 감싸서 useSearchParams 사용 시의 렌더링 지연 처리) */}
@@ -20,10 +22,10 @@ export default function HomePage() {
         {/* 메인 컨텐츠 영역 */}
         <div className="space-y-12">
           
-          {/* 1. 토픽 베스트 섹션 */}
+          {/* 1. 베스트 인기 글 섹션 */}
           <section>
             <PostSection
-              title="토픽 베스트"
+              title="베스트 인기 글"
               icon="🔥"
               sort="best"
               link="/posts?sort=best"

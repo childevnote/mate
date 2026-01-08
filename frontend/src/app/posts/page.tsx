@@ -20,7 +20,7 @@ function PostsPageContent() {
   if (search) {
     pageTitle = `'${search}' 검색 결과`;
   } else if (sort === "best") {
-    pageTitle = "🔥 토픽 베스트";
+    pageTitle = "🔥 베스트 인기 글";
   } else if (category && CATEGORY_LABELS[category]) {
     pageTitle = `📂 ${CATEGORY_LABELS[category]} 게시판`;
   } else if (sort === "latest" && !category) {

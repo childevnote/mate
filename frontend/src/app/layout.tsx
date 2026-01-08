@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Providers from "@/components/Providers";
 import Navbar from "@/components/layout/Navbar";
-import SpeedLogger from "@/components/common/SpeedLogger";
 import "@/globals.css";
 
 export const metadata: Metadata = {
@@ -35,7 +34,6 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body>
-        <SpeedLogger />
         <Providers>
           <Navbar />
           <main className="min-h-screen bg-gray-50">{children}</main>

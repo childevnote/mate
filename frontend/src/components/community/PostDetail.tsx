@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useAtomValue } from "jotai";
@@ -16,15 +17,29 @@ export default function PostDetail({ postId }: PostDetailProps) {
   const queryClient = useQueryClient();
   const user = useAtomValue(userAtom);
 
+  const startTime = useRef<number>(0);
+
   // React Query로 데이터 가져오기
   const {
     data: post,
     isLoading,
     isError,
+    isFetching
   } = useQuery<Post>({
     queryKey: ["post", postId], 
-    queryFn: () => postService.getPostDetail(postId),
+    queryFn: () => {
+      startTime.current = performance.now();
+      return postService.getPostDetail(postId);
+    },
   });
+
+  useEffect(() => {
+    if (!isFetching && startTime.current > 0) {
+      const duration = performance.now() - startTime.current;
+      console.log(`[상세글 로딩 완료] (ID:${postId}) 소요시간: ${duration.toFixed(2)}ms`);
+    }
+  }, [isFetching, postId]);
+
 
   const deleteMutation = useMutation({
     mutationFn: postService.deletePost,
