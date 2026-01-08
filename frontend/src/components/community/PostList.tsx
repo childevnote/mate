@@ -20,13 +20,14 @@ export default function PostList() {
 
 
   // 데이터 요청
-  const { data: posts, isLoading, isError } = useQuery<Post[]>({
+  const { data: posts, isLoading, isError, isFetching } = useQuery<Post[]>({
     queryKey: ["posts", category, sort, search, page],
     queryFn: () => postService.getPosts(page, search, category, sort),
     placeholderData: (prev) => prev, // 로딩 중 깜빡임 방지
   });
 
   const list = Array.isArray(posts) ? posts : [];
+  const isLastPage = list.length < 10;
 
   if (isLoading) {
     return (
@@ -55,32 +56,38 @@ export default function PostList() {
   return (
     <div>
       {/* 리스트 렌더링 */}
-      <div className="divide-y divide-gray-100 border-b border-gray-100">
+      <div 
+        className={`divide-y divide-gray-100 border-b border-gray-100 transition-opacity duration-200 ${
+          isFetching ? "opacity-40 pointer-events-none" : "opacity-100"
+        }`}
+      >
         {list.map((post) => (
           <PostCard 
             key={post.id} 
             post={post} 
-            // 카테고리 필터가 없을 때만 뱃지 표시 (전체보기나 베스트에서는 카테고리 표시)
             showCategory={!category} 
           />
         ))}
       </div>
 
       {/* 페이지네이션 (간단하게 이전/다음 버튼 구현) */}
-      <div className="flex justify-center items-center gap-4 mt-8">
+      <div className="flex justify-center items-center gap-4 mt-8 pb-8">
         <button
           onClick={() => setPage((old) => Math.max(old - 1, 1))}
-          disabled={page === 1}
-          className="px-4 py-2 border rounded-md text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={page === 1 || isFetching} // 로딩 중 클릭 방지
+          className="px-4 py-2 border rounded-md text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           이전
         </button>
-        <span className="text-sm font-medium">Page {page}</span>
+        
+        <span className="text-sm font-medium min-w-[60px] text-center">
+          {page} 페이지
+        </span>
+        
         <button
           onClick={() => setPage((old) => old + 1)}
-          // 다음 페이지 데이터가 없으면 비활성화하는 로직은 백엔드 total_count가 필요하나, 
-          // 현재는 리스트 길이가 0이면 멈추도록 간단히 처리 가능 (여기선 생략)
-          className="px-4 py-2 border rounded-md text-sm hover:bg-gray-50"
+          disabled={isLastPage || isFetching} // 로딩 중 클릭 방지
+          className="px-4 py-2 border rounded-md text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           다음
         </button>
