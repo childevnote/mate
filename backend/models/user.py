@@ -39,6 +39,7 @@ class User(Base):
     university = relationship("University", back_populates="users")
     posts = relationship("Post", back_populates="author")
     comments = relationship("Comment", back_populates="author")
+    passkeys = relationship("Passkey", back_populates="user")
 
 class EmailVerification(Base):
     __tablename__ = "email_verifications"

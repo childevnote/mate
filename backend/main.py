@@ -6,7 +6,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "lib"))
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
-from api.v1.endpoints import community, users, login
+from api.v1.endpoints import community, users, login, passkey
 
 app = FastAPI()
 
@@ -26,6 +26,7 @@ app.add_middleware(
 app.include_router(community.router, prefix="/api/v1/community", tags=["Community"])
 app.include_router(users.router, prefix="/api/v1/users", tags=["Users"])
 app.include_router(login.router, prefix="/api/v1/auth", tags=["Authentication"])
+app.include_router(passkey.router, prefix="/api/v1/auth/passkey", tags=["Passkey"])
 
 @app.get("/")
 def health_check():
