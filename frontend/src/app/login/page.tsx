@@ -16,10 +16,12 @@ export default function LoginPage() {
   const [username, setUsername] = useState(""); 
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
+    setIsLoading(true); // 로딩 시작
 
     try {
       const data = await authService.login(username, password);
@@ -36,7 +38,7 @@ export default function LoginPage() {
       const userResponse = await api.get("/api/v1/users/me");
       const user = userResponse.data;
 
-      // 상태 저장 (Jotai) 매핑 수정
+      // 상태 저장 (Jotai)
       setUser({
         id: user.id,
         username: user.username,
@@ -58,6 +60,8 @@ export default function LoginPage() {
       } else {
         setErrorMsg("로그인 중 알 수 없는 오류가 발생했습니다.");
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -110,17 +114,37 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            className="w-full py-3.5 bg-primary text-primary-foreground rounded-lg font-bold text-lg hover:opacity-90 active:scale-[0.98] transition-all shadow-sm"
+            disabled={isLoading}
+            className={`w-full py-3.5 rounded-lg font-bold text-lg transition-all shadow-sm flex items-center justify-center gap-2
+              ${isLoading 
+                ? "bg-primary/70 text-primary-foreground/70 cursor-not-allowed" 
+                : "bg-primary text-primary-foreground hover:opacity-90 active:scale-[0.98]"
+              }`}
           >
-            로그인하기
+            {isLoading ? (
+              <>
+                <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                로그인 중...
+              </>
+            ) : "로그인하기"}
           </button>
         </form>
 
-        <div className="mt-6 text-center text-sm text-muted-foreground">
-          계정이 없으신가요?{" "}
+        <div className="mt-8 pt-6 border-t border-border flex items-center justify-center gap-4 text-sm text-muted-foreground">
+          <Link href="/find/id" className="hover:text-foreground transition-colors">
+            아이디 찾기
+          </Link>
+          <span className="h-3 w-px bg-border"></span>
+          <Link href="/find/password" className="hover:text-foreground transition-colors">
+            비밀번호 찾기
+          </Link>
+          <span className="h-3 w-px bg-border"></span>
           <Link
             href="/signup"
-            className="font-bold text-primary underline underline-offset-4 hover:text-foreground transition-colors"
+            className="font-bold text-primary hover:text-primary/80 transition-colors"
           >
             회원가입
           </Link>

@@ -25,7 +25,7 @@ app.add_middleware(
 
 app.include_router(community.router, prefix="/api/v1/community", tags=["Community"])
 app.include_router(users.router, prefix="/api/v1/users", tags=["Users"])
-app.include_router(login.router, prefix="/api/v1/auth", tags=["auth"])
+app.include_router(login.router, prefix="/api/v1/auth", tags=["Authentication"])
 
 @app.get("/")
 def health_check():
