@@ -13,10 +13,12 @@ import { userService } from "@/services/userService";
 import { authService } from "@/services/authService";
 
 // 타입 정의
-import { Post, PostListProps } from "@/types/post";
+import { Post } from "@/types/post";
 import { Comment as IComment } from "@/types/comment";
-import { PasswordChangeRequest, UserActionResponse } from "@/types/user";
-import { ApiErrorResponse } from "@/types/common";
+import { UserActionResponse } from "@/types/user";
+import { User } from "@/types/auth";
+
+import RegisterPasskeyButton from "@/components/auth/RegisterPasskeyButton"; 
 
 type TabType = "info" | "posts" | "comments" | "scraps";
 
@@ -25,18 +27,21 @@ export default function MyPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabType>("info");
 
+  // 1. 내가 쓴 글 조회
   const { data: myPosts } = useQuery<Post[]>({
     queryKey: ["myPosts", user?.id],
     queryFn: () => userService.getMyPosts(user!.id),
     enabled: !!user && activeTab === "posts",
   });
 
+  // 2. 내가 쓴 댓글 조회
   const { data: myComments } = useQuery<IComment[]>({
     queryKey: ["myComments", user?.id],
     queryFn: () => userService.getMyComments(user!.id),
     enabled: !!user && activeTab === "comments",
   });
 
+  // 3. 스크랩한 글 조회
   const { data: scrappedPosts } = useQuery<Post[]>({
     queryKey: ["scrappedPosts"],
     queryFn: () => userService.getScrappedPosts(),
@@ -62,17 +67,30 @@ export default function MyPage() {
       <h1 className="text-3xl font-bold mb-10 text-gray-900">마이페이지</h1>
 
       <div className="flex flex-col md:flex-row gap-8">
-        {/* 왼쪽 사이드바 */}
-        <aside className="w-full md:w-64 shrink-0 flex flex-col gap-6">
+        {/* 왼쪽 사이드바 (프로필) */}
+        <aside className="w-full md:w-72 shrink-0 flex flex-col gap-6">
           <div className="p-6 bg-white border border-gray-200 rounded-2xl shadow-sm text-center">
-            <div className="w-20 h-20 bg-primary/10 text-primary rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-4 border border-primary/20">
+            {/* 프로필 이미지 (이니셜) */}
+            <div className="w-24 h-24 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-4 shadow-lg shadow-indigo-200">
               {user.nickname[0]}
             </div>
+            
             <h2 className="text-xl font-bold text-gray-900">{user.nickname}</h2>
-            <p className="text-gray-500 text-sm mt-1">{user.username}</p>
+            <p className="text-gray-500 text-sm mt-1 mb-3">@{user.username}</p>
+            
+            {/* 인증 뱃지 */}
+            {user.is_student_verified ? (
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold border border-blue-100">
+                🎓 학교 인증 완료
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-medium">
+                미인증 회원
+              </span>
+            )}
           </div>
 
-          <nav className="flex flex-col gap-1.5">
+          <nav className="flex flex-col gap-2">
             <TabButton
               label="내 정보 관리"
               isActive={activeTab === "info"}
@@ -97,7 +115,7 @@ export default function MyPage() {
 
           <button
             onClick={handleLogout}
-            className="w-full py-3 text-gray-500 hover:bg-gray-100 rounded-xl text-sm font-medium transition duration-200"
+            className="w-full py-3 text-gray-500 hover:bg-gray-100 rounded-xl text-sm font-medium transition duration-200 mt-auto"
           >
             로그아웃
           </button>
@@ -105,7 +123,7 @@ export default function MyPage() {
 
         {/* 오른쪽 컨텐츠 영역 */}
         <main className="flex-1 bg-white border border-gray-200 rounded-2xl p-8 shadow-sm min-h-[600px]">
-          {activeTab === "info" && <MyInfoSection />}
+          {activeTab === "info" && <MyInfoSection user={user} />}
           {activeTab === "posts" && (
             <PostList posts={myPosts} emptyMsg="아직 작성한 글이 없습니다." />
           )}
@@ -136,43 +154,24 @@ function TabButton({ label, isActive, onClick }: TabButtonProps) {
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left px-5 py-3.5 rounded-xl transition-all duration-200 font-medium ${
+      className={`w-full text-left px-5 py-3.5 rounded-xl transition-all duration-200 font-medium flex justify-between items-center ${
         isActive
-          ? "bg-primary text-white shadow-md shadow-primary/20"
+          ? "bg-gray-900 text-white shadow-md"
           : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
       }`}
     >
       {label}
+      {isActive && <span>👉</span>}
     </button>
   );
 }
 
-function MyInfoSection() {
-  const [passwords, setPasswords] = useState<PasswordChangeRequest>({
-    old_password: "",
-    new_password: "",
-  });
+// 내 정보 섹션 (비밀번호 변경 삭제, 기기/인증 관리 추가)
+function MyInfoSection({ user }: { user: User }) { // user 타입은 auth.ts의 User 사용 권장
   const router = useRouter();
   const [, setUser] = useAtom(userAtom);
 
-  // AxiosError의 제네릭에 ApiErrorResponse 추가하여 any 제거
-  const pwMutation = useMutation<
-    UserActionResponse,
-    AxiosError<ApiErrorResponse>,
-    PasswordChangeRequest
-  >({
-    mutationFn: (data) => userService.changePassword(data),
-    onSuccess: () => {
-      alert("비밀번호가 성공적으로 변경되었습니다.");
-      setPasswords({ old_password: "", new_password: "" });
-    },
-    onError: (err) => {
-      // 🔥 [수정] 이제 err.response.data.error는 string으로 자동 추론됨 (No any)
-      const msg = err.response?.data?.error || "비밀번호 변경에 실패했습니다.";
-      alert(msg);
-    },
-  });
-
+  // 계정 삭제 Mutation
   const deleteMutation = useMutation<UserActionResponse, AxiosError>({
     mutationFn: userService.deleteAccount,
     onSuccess: () => {
@@ -185,77 +184,73 @@ function MyInfoSection() {
   });
 
   return (
-    <div className="space-y-12 max-w-lg">
+    <div className="space-y-10 max-w-2xl animate-in fade-in slide-in-from-bottom-2 duration-500">
+      {/* 1. 학교 인증 섹션 */}
       <section>
-        <h3 className="text-xl font-bold mb-6 text-gray-900 border-b border-gray-100 pb-4">
-          비밀번호 변경
+        <h3 className="text-xl font-bold mb-4 text-gray-900 flex items-center gap-2">
+          🏫 학교 인증
+          {user.is_student_verified && (
+            <span className="text-green-500 text-sm font-normal">✔ 완료됨</span>
+          )}
         </h3>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              현재 비밀번호
-            </label>
-            <input
-              type="password"
-              value={passwords.old_password}
-              onChange={(e) =>
-                setPasswords({ ...passwords, old_password: e.target.value })
-              }
-              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition"
-              placeholder="••••••••"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              새 비밀번호
-            </label>
-            <input
-              type="password"
-              value={passwords.new_password}
-              onChange={(e) =>
-                setPasswords({ ...passwords, new_password: e.target.value })
-              }
-              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition"
-              placeholder="••••••••"
-            />
-          </div>
-          <button
-            onClick={() => pwMutation.mutate(passwords)}
-            disabled={
-              !passwords.old_password ||
-              !passwords.new_password ||
-              pwMutation.isPending
-            }
-            className="mt-2 px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-black transition disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-          >
-            {pwMutation.isPending ? "변경 중..." : "비밀번호 변경"}
-          </button>
+        <div className="p-5 bg-gray-50 rounded-xl border border-gray-100">
+          {user.is_student_verified ? (
+            <div>
+              <p className="font-bold text-gray-800 text-lg mb-1">{user.university}</p>
+              <p className="text-gray-500 text-sm">{user.school_email}</p>
+            </div>
+          ) : (
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="font-medium text-gray-800">아직 인증되지 않았습니다.</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  학교 인증을 완료하면 <strong>장터</strong>와 <strong>모든 게시판</strong>을 이용할 수 있습니다.
+                </p>
+              </div>
+              <Link
+                href="/verify-school" // 학교 인증 페이지 (나중에 만들어야 함)
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition"
+              >
+                인증하기
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
+      {/* 2. 로그인 기기 관리 (패스키) */}
       <section>
-        <h3 className="text-xl font-bold mb-4 text-red-600 border-b border-red-100 pb-4">
-          계정 삭제
-        </h3>
-        <div className="bg-red-50 p-6 rounded-xl border border-red-100">
-          <p className="text-sm text-gray-700 mb-4 leading-relaxed">
-            회원 탈퇴 시 계정 정보는 즉시 삭제되며 복구할 수 없습니다.
-            <br />
-            작성하신 게시글과 댓글은 자동으로 삭제되지 않을 수 있습니다.
+        <h3 className="text-xl font-bold mb-4 text-gray-900">🔐 로그인 기기 관리</h3>
+        <div className="p-5 bg-gray-50 rounded-xl border border-gray-100">
+          <p className="text-sm text-gray-600 mb-4">
+            현재 로그인된 기기 외에 다른 기기(핸드폰, 태블릿 등)에서도 로그인하려면<br/>
+            해당 기기에서 로그인 후 <strong>[기기 등록]</strong>을 진행해주세요.
           </p>
+          
+          {/* 기기 등록 버튼 컴포넌트 */}
+          <RegisterPasskeyButton user={user} />
+        </div>
+      </section>
+
+      {/* 3. 계정 삭제 */}
+      <section>
+        <h3 className="text-xl font-bold mb-4 text-red-600">계정 관리</h3>
+        <div className="p-5 bg-red-50 rounded-xl border border-red-100 flex justify-between items-center">
+          <div>
+            <p className="font-bold text-red-700">회원 탈퇴</p>
+            <p className="text-xs text-red-500/80 mt-1">
+              탈퇴 시 계정 정보는 즉시 삭제되며 복구할 수 없습니다.
+            </p>
+          </div>
           <button
             onClick={() => {
-              if (
-                confirm(
-                  "정말로 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다."
-                )
-              ) {
+              if (confirm("정말로 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) {
                 deleteMutation.mutate();
               }
             }}
-            className="px-5 py-2.5 bg-white border border-red-200 text-red-600 rounded-lg hover:bg-red-50 hover:border-red-300 transition font-medium text-sm"
+            className="px-4 py-2 bg-white border border-red-200 text-red-600 rounded-lg hover:bg-red-50 text-sm font-bold transition"
           >
-            회원 탈퇴하기
+            탈퇴하기
           </button>
         </div>
       </section>
@@ -263,44 +258,47 @@ function MyInfoSection() {
   );
 }
 
+// ----------------------------------------------------------------------
+// List Components (기존 유지)
+// ----------------------------------------------------------------------
+
+interface PostListProps {
+  posts: Post[] | undefined;
+  emptyMsg: string;
+}
+
 function PostList({ posts, emptyMsg }: PostListProps) {
   if (!posts || posts.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 text-gray-400 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+      <div className="flex flex-col items-center justify-center py-20 text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-200">
         <p>{emptyMsg}</p>
       </div>
     );
   }
 
   return (
-    <div className="grid gap-4">
+    <div className="grid gap-3">
       {posts.map((post) => (
         <Link
           key={post.id}
           href={`/posts/${post.id}`}
-          className="group block p-5 bg-white border border-gray-100 rounded-xl hover:border-primary/40 hover:shadow-md transition duration-200"
+          className="group block p-4 bg-white border border-gray-100 rounded-xl hover:border-gray-300 hover:shadow-sm transition-all duration-200"
         >
           <div className="flex justify-between items-start mb-2">
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-bold bg-primary/10 text-primary">
+            <span className="px-2 py-0.5 rounded-md text-xs font-bold bg-gray-100 text-gray-600 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
               {post.category}
             </span>
-            <span className="text-xs text-gray-400 font-medium">
+            <span className="text-xs text-gray-400">
               {new Date(post.created_at).toLocaleDateString()}
             </span>
           </div>
-          <h4 className="text-lg font-bold text-gray-900 group-hover:text-primary transition-colors mb-3 line-clamp-1">
+          <h4 className="text-base font-bold text-gray-900 group-hover:text-primary transition-colors mb-2 line-clamp-1">
             {post.title}
           </h4>
-          <div className="flex items-center gap-4 text-sm text-gray-500 font-medium">
-            <span className="flex items-center gap-1">
-              👁️ {post.view_count}
-            </span>
-            <span className="flex items-center gap-1">
-              ❤️ {post.like_count}
-            </span>
-            <span className="flex items-center gap-1">
-              💬 {post.comment_count}
-            </span>
+          <div className="flex gap-3 text-xs text-gray-500 font-medium">
+            <span>👁️ {post.view_count}</span>
+            <span>❤️ {post.like_count}</span>
+            <span>💬 {post.comment_count}</span>
           </div>
         </Link>
       ))}
@@ -309,13 +307,13 @@ function PostList({ posts, emptyMsg }: PostListProps) {
 }
 
 interface CommentListProps {
-  comments: IComment[] | undefined; // 🔥 IComment 필수
+  comments: IComment[] | undefined;
 }
 
 function CommentList({ comments }: CommentListProps) {
   if (!comments || comments.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 text-gray-400 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+      <div className="flex flex-col items-center justify-center py-20 text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-200">
         <p>작성한 댓글이 없습니다.</p>
       </div>
     );
@@ -327,17 +325,17 @@ function CommentList({ comments }: CommentListProps) {
         <Link
           key={comment.id}
           href={`/posts/${comment.post_id}`}
-          className="block p-5 bg-white border border-gray-100 rounded-xl hover:bg-gray-50 hover:border-gray-200 transition duration-200"
+          className="block p-4 bg-white border border-gray-100 rounded-xl hover:bg-gray-50 transition duration-200"
         >
-          <p className="text-gray-800 mb-3 line-clamp-2 leading-relaxed">
+          <p className="text-gray-800 text-sm mb-2 line-clamp-2">
             {comment.content}
           </p>
-          <div className="flex items-center justify-between text-xs">
-            <span className="font-medium text-gray-400">
+          <div className="flex justify-between items-center text-xs">
+            <span className="text-gray-400">
               {new Date(comment.created_at).toLocaleString()}
             </span>
-            <span className="text-primary font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-              게시글 보기 →
+            <span className="text-blue-600 font-medium opacity-0 group-hover:opacity-100">
+              이동 →
             </span>
           </div>
         </Link>
