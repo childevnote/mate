@@ -7,59 +7,49 @@ import { userAtom } from "@/store/authStore";
 import { authService } from "@/services/authService";
 import { api } from "@/lib/axios"; 
 import Link from "next/link";
-import axios from "axios";
+import { getErrorMessage } from "@/utils/error";
+import { User } from "@/types/auth";
 
 export default function LoginPage() {
   const router = useRouter();
   const setUser = useSetAtom(userAtom);
 
   const [username, setUsername] = useState(""); 
-  const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!username) return;
+    
     setErrorMsg("");
-    setIsLoading(true); // 로딩 시작
+    setIsLoading(true);
 
     try {
-      const data = await authService.login(username, password);
+      // 1. 패스키 로그인 시도
+      await authService.loginPasskey(username);
       
-      const { access_token, refresh_token } = data;
-
-      // 토큰 저장
-      localStorage.setItem("accessToken", access_token);
-      if (refresh_token) {
-        localStorage.setItem("refreshToken", refresh_token);
-      }
-
-      // 토큰을 이용해 '내 정보' 가져오기
-      const userResponse = await api.get("/api/v1/users/me");
+      // 2. 토큰을 이용해 '내 정보' 가져오기
+      const userResponse = await api.get<User>("/api/v1/users/me");
       const user = userResponse.data;
 
-      // 상태 저장 (Jotai)
+      // 3. 상태 저장 (Jotai)
       setUser({
         id: user.id,
         username: user.username,
         nickname: user.nickname,
-        university: user.university || undefined,
-        email: user.email || undefined
+        email: user.email,
+        university: user.university,
+        school_email: user.school_email,
+        is_student_verified: user.is_student_verified,
+        is_active: user.is_active,
       });
 
       router.push("/");
     } catch (error: unknown) {
       console.error("Login Failed:", error);
-
-      if (axios.isAxiosError(error)) {
-        const message =
-          (error.response?.data as { detail?: string })?.detail ||
-          (error.response?.data as { message?: string })?.message ||
-          "아이디 또는 비밀번호를 확인해주세요.";
-        setErrorMsg(message);
-      } else {
-        setErrorMsg("로그인 중 알 수 없는 오류가 발생했습니다.");
-      }
+      const message = getErrorMessage(error);
+      setErrorMsg(message);
     } finally {
       setIsLoading(false);
     }
@@ -73,7 +63,7 @@ export default function LoginPage() {
             로그인
           </h1>
           <p className="text-sm text-muted-foreground">
-            mate에 오신 것을 환영합니다.
+            아이디를 입력하고 패스키로 로그인하세요.
           </p>
         </div>
 
@@ -87,20 +77,6 @@ export default function LoginPage() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="아이디를 입력하세요"
-              className="w-full p-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:outline-none bg-background text-foreground transition-all"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-bold text-foreground mb-1">
-              비밀번호
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="비밀번호를 입력하세요"
               className="w-full p-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:outline-none bg-background text-foreground transition-all"
               required
             />
@@ -127,19 +103,15 @@ export default function LoginPage() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                로그인 중...
+                지문 인증 중...
               </>
-            ) : "로그인하기"}
+            ) : "🔐 패스키로 로그인"}
           </button>
         </form>
 
         <div className="mt-8 pt-6 border-t border-border flex items-center justify-center gap-4 text-sm text-muted-foreground">
           <Link href="/find/id" className="hover:text-foreground transition-colors">
             아이디 찾기
-          </Link>
-          <span className="h-3 w-px bg-border"></span>
-          <Link href="/find/password" className="hover:text-foreground transition-colors">
-            비밀번호 찾기
           </Link>
           <span className="h-3 w-px bg-border"></span>
           <Link

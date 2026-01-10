@@ -2,31 +2,42 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime
 
-# 공통 속성
+# --------------------------------------
+# 1. 기본 유저 스키마
+# --------------------------------------
 class UserBase(BaseModel):
-    email: Optional[EmailStr] = None 
+    email: EmailStr 
     username: str
     nickname: str
-    university: Optional[str] = None
+    university_id: Optional[int] = None # 학교 선택은 옵션
 
-# 회원가입 요청 (Client -> Server)
+# --------------------------------------
+# 2. 회원가입/생성 관련 (Client -> Server)
+# --------------------------------------
 class UserCreate(UserBase):
-    password: str
+    pass 
 
-# 로그인 응답 / 회원 정보 조회 (Server -> Client)
+
+class EmailSendRequest(BaseModel):
+    """인증번호 발송 요청"""
+    email: EmailStr
+
+class EmailVerifyRequest(BaseModel):
+    """인증번호 검증 요청"""
+    email: EmailStr
+    code: str
+
+# --------------------------------------
+# 4. 응답용 스키마 (Server -> Client)
+# --------------------------------------
 class UserResponse(UserBase):
     id: int
     is_active: bool
     is_student_verified: bool
     date_joined: datetime
 
-
     class Config:
         from_attributes = True
-
-class CheckCodeRequest(BaseModel):
-    email: EmailStr
-    code: str
 
 class ChangePasswordRequest(BaseModel):
     old_password: str
