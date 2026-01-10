@@ -10,7 +10,7 @@ import PostListSkeleton from "@/components/community/PostListSkeleton";
 export default function PostSection({
   title,
   icon,
-  category = "", 
+  category, 
   sort = "latest",
   link,
 }: PostSectionProps) {
