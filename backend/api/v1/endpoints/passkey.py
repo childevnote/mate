@@ -1,22 +1,20 @@
 from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.orm import Session
 from datetime import timedelta
+import random
+import string
+import base64
 
 # DB 및 모델 관련
 from database import get_db
 from models.user import User, Passkey
-from schemas.user import UserCreate, UserResponse # 기존 스키마 활용
 from core.security import create_access_token, create_refresh_token
 from core.config import settings
-
-import base64
-import random
-import string
 
 router = APIRouter()
 
 # --------------------------------------------------------------------------
-# 1. [신규] 회원가입용 옵션 요청 (아이디 중복 확인 및 챌린지 생성)
+# 1. 회원가입용 옵션 요청 (아이디 중복 확인 및 챌린지 생성)
 # --------------------------------------------------------------------------
 @router.post("/signup/options")
 def signup_options(
@@ -28,19 +26,14 @@ def signup_options(
     if existing_user:
         raise HTTPException(status_code=400, detail="이미 존재하는 아이디입니다.")
 
-    # 2. WebAuthn 등록 옵션 생성 (Challenge)
-    # 실제로는 webauthn 라이브러리의 generate_registration_options 사용 권장
+    # 2. Challenge 생성
     challenge = "".join(random.choices(string.ascii_letters + string.digits, k=32))
     
-    # 3. 챌린지를 세션이나 캐시(Redis)에 저장해야 검증 가능함
-    # 여기서는 데모를 위해 챌린지를 그대로 반환하지만, 실제론 서버가 기억하고 있어야 함.
-    
-    # 프론트엔드 @simplewebauthn/browser 가 이해할 수 있는 포맷
     return {
         "challenge": challenge,
         "rp": {
-            "name": "Mate Community",
-            "id": "localhost", # 배포시에는 실제 도메인 (예: mate.com)
+            "name": settings.RP_NAME,
+            "id": settings.RP_ID,
         },
         "user": {
             "id": base64.urlsafe_b64encode(username.encode()).decode().rstrip("="),
@@ -55,14 +48,14 @@ def signup_options(
         "attestation": "none",
         "excludeCredentials": [],
         "authenticatorSelection": {
-            "authenticatorAttachment": "platform", # 지문/FaceID (기기 내장)
+            "authenticatorAttachment": "platform",
             "userVerification": "required",
-            "residentKey": "required" # 패스키 방식 필수
+            "residentKey": "required"
         }
     }
 
 # --------------------------------------------------------------------------
-# 2. [신규] 회원가입 검증 및 유저 생성 (실제 가입 처리)
+# 2. 회원가입 검증 및 유저 생성
 # --------------------------------------------------------------------------
 @router.post("/signup/verify")
 def signup_verify(
@@ -70,28 +63,32 @@ def signup_verify(
     nickname: str = Body(...),
     email: str = Body(...),
     university_id: int | None = Body(None),
-    response: dict = Body(...), # WebAuthn 인증 응답 결과
+    response: dict = Body(...),
     db: Session = Depends(get_db)
 ):
-    # 1. 아이디 중복 재확인
+    # 1. 아이디 중복 재확인 (방어 로직)
     if db.query(User).filter(User.username == username).first():
-        raise HTTPException(status_code=400, detail="이미 가입된 사용자입니다.")
+        raise HTTPException(status_code=400, detail="이미 가입된 아이디입니다.")
 
+    # 이메일 중복 확인
+    if db.query(User).filter(User.email == email).first():
+        raise HTTPException(status_code=400, detail="이미 등록된 이메일입니다.")
+
+    # 3. 유저 DB 생성
     new_user = User(
         username=username,
         nickname=nickname,
         email=email,
-        password=None, # 패스키 유저는 비밀번호 NULL
+        password=None,
         university_id=university_id,
         is_active=True,
-        is_student_verified=False # 기본값
+        is_student_verified=False
     )
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
 
-
-    # 임시: 더미 데이터로 패스키 등록 처리
+    # 4. 패스키 정보 저장
     new_passkey = Passkey(
         user_id=new_user.id,
         credential_id=response.get("id", "dummy_id"),
@@ -101,7 +98,7 @@ def signup_verify(
     db.add(new_passkey)
     db.commit()
 
-    # 5. 토큰 발급 (자동 로그인)
+    # 5. 토큰 발급
     access_token = create_access_token(data={"sub": str(new_user.id)})
     refresh_token = create_refresh_token(data={"sub": str(new_user.id)})
 
@@ -128,16 +125,14 @@ def login_options(
     user = db.query(User).filter(User.username == username).first()
     if not user:
         raise HTTPException(status_code=404, detail="존재하지 않는 사용자입니다.")
-
     
     challenge = "".join(random.choices(string.ascii_letters + string.digits, k=32))
 
     return {
         "challenge": challenge,
-        "rpId": "localhost",
+        "rpId": settings.RP_ID,
         "timeout": 60000,
         "userVerification": "required",
-        # "allowCredentials": [...]
     }
 
 # --------------------------------------------------------------------------
@@ -152,7 +147,7 @@ def login_verify(
     user = db.query(User).filter(User.username == username).first()
     if not user:
         raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
-
+    
     # 검증 성공 시 토큰 발급
     access_token = create_access_token(data={"sub": str(user.id)})
     refresh_token = create_refresh_token(data={"sub": str(user.id)})

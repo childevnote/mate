@@ -3,9 +3,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models.user import EmailVerification
+from models.user import EmailVerification, User 
 from core.email import send_verification_email
-from schemas.user import EmailSendRequest, EmailVerifyRequest 
+from schemas.user import EmailSendRequest, EmailVerifyRequest
 
 router = APIRouter()
 
@@ -15,8 +15,15 @@ def send_email_code(
     request: EmailSendRequest,
     db: Session = Depends(get_db)
 ):
-    email = request.email # 스키마에서 꺼내기
+    email = request.email
 
+    # 이미 가입된 이메일인지 먼저 확인
+    existing_user = db.query(User).filter(User.email == email).first()
+    if existing_user:
+        raise HTTPException(
+            status_code=400, 
+            detail="이미 가입된 이메일입니다. 로그인해주세요."
+        )
     # 6자리 코드 생성
     code = str(random.randint(100000, 999999))
 
