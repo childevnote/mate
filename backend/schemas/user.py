@@ -35,7 +35,8 @@ class UserResponse(UserBase):
     is_active: bool
     is_student_verified: bool
     date_joined: datetime
-
+    university_name: Optional[str] = None 
+    school_email: Optional[str] = None
     class Config:
         from_attributes = True
 

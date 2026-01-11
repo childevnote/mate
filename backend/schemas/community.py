@@ -31,7 +31,8 @@ class PostResponse(PostBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
     author_id: int
-    
+    author_nickname: str
+    is_author: bool = False
     comment_count: int
     like_count: int
     scrap_count: int
@@ -58,6 +59,6 @@ class CommentResponse(CommentBase):
     author_nickname: str
     author_university: str
     reply_count: int
-
+    is_author: bool = False
     class Config:
         from_attributes = True
