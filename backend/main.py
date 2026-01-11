@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
 from api.v1.endpoints import community, users, login, passkey, auth
 
-app = FastAPI()
+app = FastAPI(root_path="/default")
 
 origins = [
     "http://localhost:3000",                      
