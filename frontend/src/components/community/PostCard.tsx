@@ -19,11 +19,6 @@ export default function PostCard({ post, showCategory = true }: PostCardProps) {
         <div className="flex items-center gap-3 overflow-hidden">
           {showCategory && (
             <div className="flex-shrink-0 flex items-center gap-1.5">
-              {/* 카테고리 아이콘 (동그라미) */}
-              <div className="w-6 h-6 rounded-full bg-gray-100 text-xs flex items-center justify-center text-gray-500 font-bold">
-                 {/* 아이콘 대신 카테고리 앞글자 */}
-                 {categoryLabel[0]}
-              </div>
               <span className="text-xs font-bold text-gray-500 min-w-[30px]">
                 {categoryLabel}
               </span>
