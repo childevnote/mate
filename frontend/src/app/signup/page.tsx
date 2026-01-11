@@ -35,29 +35,54 @@ export default function SignupPage() {
     isOpen: false,
     type: "info" as "success" | "error" | "info",
     message: "",
+    redirectUrl: null as string | null, 
   });
 
-  // ... (헬퍼 함수들 기존과 동일) ...
   const getErrorMessage = (error: unknown): string => {
+    // 백엔드(FastAPI)에서 보낸 에러 메시지 처리
     if (error instanceof AxiosError) {
       if (error.response?.data?.detail) {
         return error.response.data.detail as string;
       }
     }
+
+    // 패스키(WebAuthn) 관련 에러 처리
     if (error instanceof Error) {
+      // NotAllowedError: 기기 잠금이 없거나, 사용자가 취소했을 때
+      if (error.name === "NotAllowedError") {
+        return "🚫 인증이 차단되었습니다.\n\n1. 기기 잠금(PIN, 지문, FaceID)이 설정되어 있는지 확인해주세요.\n2. 브라우저의 인증 팝업에서 '취소'를 누르지 않았는지 확인해주세요.";
+      }
+
+      // InvalidStateError: 이미 등록된 인증 장치일 때
+      if (error.name === "InvalidStateError") {
+        return "이미 이 기기에 등록된 패스키가 있습니다.\n로그인 페이지로 이동해 주세요.";
+      }
+
+      // NotSupportedError: HTTPS가 아니거나(로컬 제외), 브라우저가 미지원
+      if (error.name === "NotSupportedError") {
+        return "이 브라우저나 환경에서는 패스키를 사용할 수 없습니다.\nChrome, Edge, Safari 최신 버전을 사용해 주세요.";
+      }
+      
+      // 그 외 일반 에러
       return error.message;
     }
+
     return "알 수 없는 오류가 발생했습니다.";
   };
 
-  const showAlert = (type: "success" | "error" | "info", message: string) => {
-    setModal({ isOpen: true, type, message });
+  const showAlert = (
+    type: "success" | "error" | "info", 
+    message: string, 
+    redirectUrl: string | null = null // 기본값은 null (이동 안 함)
+  ) => {
+    setModal({ isOpen: true, type, message, redirectUrl });
   };
 
   const closeModal = () => {
     setModal((prev) => ({ ...prev, isOpen: false }));
-    if (modal.message.includes("완료되었습니다")) {
-      router.push("/");
+    
+    if (modal.redirectUrl) {
+      router.push(modal.redirectUrl);
     }
   };
 
@@ -133,7 +158,11 @@ export default function SignupPage() {
     setLoadingMap(prev => ({ ...prev, submit: true }));
     try {
       await authService.signupWithPasskey(formData);
-      showAlert("success", "🎉 회원가입 및 기기 등록이 완료되었습니다!\n자동으로 로그인됩니다.");
+      showAlert(
+        "success", 
+        "🎉 회원가입 및 기기 등록이 완료되었습니다!\n자동으로 로그인됩니다.", 
+        "/" 
+      );
     } catch (error: unknown) {
       console.error(error);
       showAlert("error", getErrorMessage(error));
