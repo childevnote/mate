@@ -43,3 +43,9 @@ class UserResponse(UserBase):
 class ChangePasswordRequest(BaseModel):
     old_password: str
     new_password: str
+
+class PasskeyResponse(BaseModel):
+    id: int
+    device_name: Optional[str] = "등록된 기기"
+    created_at: datetime
+    class Config: from_attributes = True

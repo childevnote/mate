@@ -4,7 +4,8 @@ import {
   CheckUsernameResponse,
   PasskeySignupRequest, // 새로 만든 타입
   EmailSendRequest,     // 새로 만든 타입
-  EmailVerifyRequest    // 새로 만든 타입
+  EmailVerifyRequest,    // 새로 만든 타입
+  PasskeyItem
 } from "@/types/auth";
 import { startRegistration, startAuthentication } from "@simplewebauthn/browser";
 
@@ -112,6 +113,17 @@ export const authService = {
   logout: () => {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
+  },
+
+
+  getMyPasskeys: async (): Promise<PasskeyItem[]> => {
+    const { data } = await api.get("/api/v1/auth/passkey/list");
+    return data;
+  },
+
+  deletePasskey: async (passkeyId: number) => {
+    const { data } = await api.delete(`/api/v1/auth/passkey/${passkeyId}`);
+    return data;
   },
 
   /**

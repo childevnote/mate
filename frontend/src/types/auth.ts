@@ -35,6 +35,12 @@ export interface PasskeySignupRequest {
   university_id?: number;
 }
 
+export interface PasskeyItem {
+  id: number;
+  device_name?: string;
+  created_at: string;
+}
+
 // 이메일 인증 관련
 export interface EmailSendRequest {
   email: string;

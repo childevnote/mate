@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.orm import Session
 from datetime import timedelta
+from typing import List
+from schemas.user import PasskeyResponse
 import random
 import string
 import base64
@@ -10,6 +12,8 @@ from database import get_db
 from models.user import User, Passkey
 from core.security import create_access_token, create_refresh_token
 from core.config import settings
+
+from api.deps import get_current_user
 
 router = APIRouter()
 
@@ -157,3 +161,41 @@ def login_verify(
         "refresh_token": refresh_token,
         "token_type": "bearer"
     }
+
+# --------------------------------------------------------------------------
+# 5. 내 기기(패스키) 목록 조회
+# --------------------------------------------------------------------------
+@router.get("/list", response_model=List[PasskeyResponse])
+def get_my_passkeys(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    passkeys = db.query(Passkey).filter(Passkey.user_id == current_user.id).all()
+    return passkeys
+
+# --------------------------------------------------------------------------
+# 6. 기기(패스키) 삭제
+# --------------------------------------------------------------------------
+@router.delete("/{passkey_id}")
+def delete_passkey(
+    passkey_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    # 내 패스키인지 확인
+    passkey = db.query(Passkey).filter(
+        Passkey.id == passkey_id,
+        Passkey.user_id == current_user.id
+    ).first()
+    
+    if not passkey:
+        raise HTTPException(status_code=404, detail="기기를 찾을 수 없습니다.")
+    
+    count = db.query(Passkey).filter(Passkey.user_id == current_user.id).count()
+    if count <= 1:
+        raise HTTPException(status_code=400, detail="최소 하나의 기기는 유지해야 합니다.")
+
+    db.delete(passkey)
+    db.commit()
+    
+    return {"message": "기기가 삭제되었습니다."}
