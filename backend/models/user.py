@@ -20,10 +20,10 @@ class User(Base):
     # 1. 필수 정보
     username = Column(String, unique=True, index=True, nullable=False)
     nickname = Column(String, unique=True, nullable=False)
-    email = Column(String, unique=True, index=True, nullable=True) # 필수지만 nullable=True (로직에서 제어)
+    email = Column(String, unique=True, index=True, nullable=True)
 
     # 2. 인증 정보
-    password = Column(String, nullable=True) # 패스키 유저는 NULL
+    password = Column(String, nullable=True)
     
     # 3. 학교/학생 인증
     school_email = Column(String, unique=True, nullable=True)
@@ -38,10 +38,14 @@ class User(Base):
     university_id = Column(Integer, ForeignKey("universities.id"), nullable=True)
     
     university = relationship("University", back_populates="users")
-    posts = relationship("Post", back_populates="author")
-    comments = relationship("Comment", back_populates="author")
-    
-    passkeys = relationship("Passkey", back_populates="user")
+    posts = relationship("Post", back_populates="author", cascade="all, delete-orphan")
+    comments = relationship("Comment", back_populates="author", cascade="all, delete-orphan")
+
+    liked_posts = relationship("PostLike", back_populates="user", cascade="all, delete-orphan")
+    scrapped_posts = relationship("PostScrap", back_populates="user", cascade="all, delete-orphan")
+
+    passkeys = relationship("Passkey", back_populates="user", cascade="all, delete-orphan")
+
 
 class EmailVerification(Base):
     __tablename__ = "email_verifications"
@@ -52,21 +56,18 @@ class EmailVerification(Base):
     is_verified = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-# 🔥 [신규 추가] Passkey 모델 정의
+
 class Passkey(Base):
     __tablename__ = "passkeys"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     
-    # WebAuthn Credential ID (긴 문자열)
     credential_id = Column(String, unique=True, index=True, nullable=False)
-    
-    # Public Key (검증용 공개키)
     public_key = Column(String, nullable=False)
-    
-    # 서명 카운트 (보안용)
     sign_count = Column(Integer, default=0)
+
+    device_name = Column(String, nullable=True) 
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
