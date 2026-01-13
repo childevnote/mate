@@ -19,6 +19,9 @@ export interface Post {
   comment_count: number;
   
   created_at: string;
+
+  is_liked: boolean;     
+  is_scrapped: boolean;
 }
 
 export interface PostDetailProps {

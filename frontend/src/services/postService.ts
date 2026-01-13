@@ -60,4 +60,14 @@ export const postService = {
   deleteComment: async (commentId: number) => {
     await api.delete(`/api/v1/community/comments/${commentId}/`);
   },
+
+  toggleLike: async (postId: number) => {
+    const { data } = await api.post(`/api/v1/community/posts/${postId}/like`);
+    return data;
+  },
+
+  toggleScrap: async (postId: number) => {
+    const { data } = await api.post(`/api/v1/community/posts/${postId}/scrap`);
+    return data;
+  }
 };
