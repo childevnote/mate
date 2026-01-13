@@ -197,7 +197,7 @@ export default function PostDetail({ postId }: PostDetailProps) {
             </div>
           )}
           <p className="whitespace-pre-wrap leading-relaxed text-gray-800 dark:text-gray-300">
-            {post.content}
+            {post.title}
           </p>
         </div>
 

@@ -21,25 +21,28 @@ class PostBase(BaseModel):
 class PostCreate(PostBase):
     pass
 
-class PostResponse(PostBase):
+class PostListResponse(BaseModel):
     id: int
     title: str
-    content: str
     category: str
     image: Optional[str] = None
     view_count: int
+    comment_count: int
     created_at: datetime
     updated_at: Optional[datetime] = None
     author_id: int
     author_nickname: str
     is_author: bool = False
-    comment_count: int
+    
+    class Config:
+        from_attributes = True
+
+# 상세용 응답 (무거운 버전)
+class PostResponse(PostListResponse):
     like_count: int
     scrap_count: int
     is_liked: bool = False
     is_scrapped: bool = False
-    class Config:
-        from_attributes = True
 
 
 

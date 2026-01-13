@@ -19,7 +19,7 @@ def create_post(
 ):
     return crud.create_post(db=db, post=post, user_id=current_user.id)
 
-@router.get("/posts", response_model=List[schemas.PostResponse])
+@router.get("/posts", response_model=List[schemas.PostListResponse])
 def read_posts(
     page: int = 1,
     limit: int = 10, 

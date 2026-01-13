@@ -1,40 +1,44 @@
 import { BoardCategory } from "./category";
 import { PaginatedResponse } from "./common";
 
-export interface Post {
+// 목록용 포스트 타입 (PostSummary)
+export interface PostSummary {
   id: number;
   category: BoardCategory;
   title: string;
-  content: string;
   image?: string | null;
   
-  // 작성자 정보
   author_id: number;
   author_nickname: string;
   is_author: boolean;
 
-  // 통계
   view_count: number;
-  like_count: number;
   comment_count: number;
   
   created_at: string;
+}
 
-  is_liked: boolean;     
+// 상세용 포스트 타입 (PostDetail)
+// 목록용 타입(PostSummary)을 상속받아 확장
+export interface PostDetail extends PostSummary {
+  like_count: number;
+    is_liked: boolean;     
   is_scrapped: boolean;
 }
+
+export type Post = PostDetail; 
 
 export interface PostDetailProps {
   postId: number;
 }
 
 export interface PostListProps {
-  posts: Post[] | undefined;
+  posts: PostSummary[] | undefined; 
   isLoading?: boolean;
   emptyMsg: string;
 }
 
-export type PostListResponse = PaginatedResponse<Post>;
+export type PostListResponse = PaginatedResponse<PostSummary>;
 
 export interface PostSectionProps {
   title: string;

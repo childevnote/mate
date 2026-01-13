@@ -29,9 +29,6 @@ def create_post(db: Session, post: PostCreate, user_id: int):
     db.refresh(db_post)
     return db_post
 
-# ---------------------------------------------------------
-# [롤백됨] 인기 게시글 조회 (좋아요 확인 로직 제거)
-# ---------------------------------------------------------
 def get_best_posts(db: Session, skip: int = 0, limit: int = 5):
     # 1. 후보군 조회
     candidates = db.query(Post)\
@@ -47,18 +44,12 @@ def get_best_posts(db: Session, skip: int = 0, limit: int = 5):
     sorted_posts = sorted(candidates, key=calculate_score, reverse=True)
     final_posts = sorted_posts[skip : skip + limit]
     
-    # 4. 목록에서는 is_liked 여부를 확인하지 않음 (기본값 False)
-    # Pydantic 스키마에서 기본값이 False이므로 별도 처리가 없어도 되지만, 명시적으로 설정
     for post in final_posts:
         post.is_liked = False
         post.is_scrapped = False
 
     return final_posts
 
-# ---------------------------------------------------------
-# [롤백됨] 게시글 목록 조회 (좋아요 확인 로직 제거)
-# user_id 인자는 라우터 에러 방지를 위해 남겨두되, 사용하지 않음(=None)
-# ---------------------------------------------------------
 def get_posts(db: Session, skip: int = 0, limit: int = 10, category: str = None, user_id: int | None = None):
     query = db.query(Post).options(*get_post_options())
     
@@ -75,10 +66,7 @@ def get_posts(db: Session, skip: int = 0, limit: int = 10, category: str = None,
             
     return posts
 
-# ---------------------------------------------------------
-# [유지] 게시글 상세 조회 (여기는 꼭 확인해야 함!)
-# 상세 페이지 들어왔을 때 버튼이 제대로 보여야 하므로 여기는 로직 유지
-# ---------------------------------------------------------
+
 def get_post(db: Session, post_id: int, user_id: int | None = None):
     post = db.query(Post).options(*get_post_options()).filter(Post.id == post_id).first()
     

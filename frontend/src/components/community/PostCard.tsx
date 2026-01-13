@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { Post } from "@/types/post";
+import { PostSummary } from "@/types/post";
 import { CATEGORY_LABELS } from "@/types/category";
 
 interface PostCardProps {
-  post: Post;
+  post: PostSummary;
   showCategory?: boolean;
 }
 
@@ -50,11 +50,7 @@ export default function PostCard({ post, showCategory = true }: PostCardProps) {
             <span className="flex items-center gap-0.5">
               👁️ {post.view_count}
             </span>
-            {post.like_count > 0 && (
-              <span className="flex items-center gap-0.5 text-red-400">
-                ❤️ {post.like_count}
-              </span>
-            )}
+            
             {post.comment_count > 0 && (
               <span className="flex items-center gap-0.5 text-blue-400">
                 💬 {post.comment_count}
