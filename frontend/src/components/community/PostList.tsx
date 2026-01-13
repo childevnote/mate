@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { postService } from "@/services/postService";
 import PostCard from "@/components/community/PostCard";
-import { Post } from "@/types/post";
+import { PostSummary } from "@/types/post";
 
 export default function PostList() {
   const searchParams = useSearchParams();
@@ -22,7 +22,7 @@ export default function PostList() {
 
 
   // 데이터 요청
-  const { data: posts, isLoading, isError, isFetching } = useQuery<Post[]>({
+  const { data: posts, isLoading, isError, isFetching } = useQuery<PostSummary[]>({
     queryKey: ["posts", category, sort, search, page],
     queryFn: () => {
       startTime.current = performance.now();

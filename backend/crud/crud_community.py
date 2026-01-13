@@ -5,12 +5,17 @@ from models.community import Post, Comment, PostLike, PostScrap
 from models.user import User
 from schemas.community import PostCreate, CommentCreate
 
+# ---------------------------------------------------------
+# 공통 옵션
+# ---------------------------------------------------------
 def get_post_options():
     return [
-        joinedload(Post.author).joinedload(User.university), # 작성자 & 학교 정보만 로딩
+        joinedload(Post.author).joinedload(User.university),
     ]
 
-
+# ---------------------------------------------------------
+# 게시글 작성
+# ---------------------------------------------------------
 def create_post(db: Session, post: PostCreate, user_id: int):
     db_post = Post(
         title=post.title,
@@ -24,48 +29,78 @@ def create_post(db: Session, post: PostCreate, user_id: int):
     db.refresh(db_post)
     return db_post
 
-
 def get_best_posts(db: Session, skip: int = 0, limit: int = 5):
-    # 최근 7일 게시글만 대상으로 함
+    # 1. 후보군 조회
     candidates = db.query(Post)\
         .options(*get_post_options())\
         .filter(Post.created_at >= func.now() - timedelta(days=7))\
         .all()
 
-    # 기존: len(post.liked_by) -> 매번 쿼리 날라감 (느림)
-    # 변경: post.like_count  -> 이미 숫자라 0초 걸림 (빠름)
+    # 2. 점수 계산
     def calculate_score(post):
         return post.view_count + (post.like_count * 3) + (post.comment_count * 5)
 
+    # 3. 정렬 및 페이징
     sorted_posts = sorted(candidates, key=calculate_score, reverse=True)
-    return sorted_posts[skip : skip + limit]
+    final_posts = sorted_posts[skip : skip + limit]
+    
+    for post in final_posts:
+        post.is_liked = False
+        post.is_scrapped = False
 
+    return final_posts
 
-def get_posts(db: Session, skip: int = 0, limit: int = 10, category: str = None):
+def get_posts(db: Session, skip: int = 0, limit: int = 10, category: str = None, user_id: int | None = None):
     query = db.query(Post).options(*get_post_options())
     
     if category and category != "ALL":
         query = query.filter(Post.category == category)
         
-    # 최신순 정렬
-    return query.order_by(Post.created_at.desc()).offset(skip).limit(limit).all()
-
-
-def get_post(db: Session, post_id: int):
-    post = db.query(Post)\
-        .options(*get_post_options())\
-        .filter(Post.id == post_id).first()
+    # 단순히 목록만 가져옴 (빠름)
+    posts = query.order_by(Post.created_at.desc()).offset(skip).limit(limit).all()
     
-    if post:
-        post.view_count += 1
-        db.commit()
-        db.refresh(post)
+    # 목록에서는 내 좋아요 여부 확인 안 함
+    for post in posts:
+        post.is_liked = False
+        post.is_scrapped = False
+            
+    return posts
+
+
+def get_post(db: Session, post_id: int, user_id: int | None = None):
+    post = db.query(Post).options(*get_post_options()).filter(Post.id == post_id).first()
+    
+    if not post:
+        return None
+
+    post.view_count += 1
+    db.commit()
+    db.refresh(post)
+
+    # 상세 페이지에서는 내가 눌렀는지 확인
+    if user_id:
+        like_record = db.query(PostLike).filter(
+            PostLike.post_id == post_id, 
+            PostLike.user_id == user_id
+        ).first()
         
+        scrap_record = db.query(PostScrap).filter(
+            PostScrap.post_id == post_id, 
+            PostScrap.user_id == user_id
+        ).first()
+        
+        post.is_liked = True if like_record else False
+        post.is_scrapped = True if scrap_record else False
+    else:
+        post.is_liked = False
+        post.is_scrapped = False
+    
     return post
 
-
+# ---------------------------------------------------------
+# 댓글 작성
+# ---------------------------------------------------------
 def create_comment(db: Session, comment: CommentCreate, user_id: int):
-
     db_comment = Comment(
         content=comment.content,
         post_id=comment.post_id,
@@ -82,6 +117,9 @@ def create_comment(db: Session, comment: CommentCreate, user_id: int):
     db.refresh(db_comment)
     return db_comment
 
+# ---------------------------------------------------------
+# 댓글 목록 조회
+# ---------------------------------------------------------
 def get_comments_by_post(db: Session, post_id: int, skip: int = 0, limit: int = 50):
     return db.query(Comment)\
         .options(joinedload(Comment.author))\
@@ -89,32 +127,35 @@ def get_comments_by_post(db: Session, post_id: int, skip: int = 0, limit: int = 
         .order_by(Comment.created_at.asc())\
         .offset(skip).limit(limit).all()
 
+# ---------------------------------------------------------
+# 좋아요 토글
+# ---------------------------------------------------------
 def toggle_like(db: Session, post_id: int, user_id: int):
     post = db.query(Post).filter(Post.id == post_id).first()
     if not post:
         return None
 
-    # 이미 좋아요 눌렀는지 확인
     existing_like = db.query(PostLike).filter(
         PostLike.post_id == post_id, 
         PostLike.user_id == user_id
     ).first()
     
     if existing_like:
-        # 취소 (DELETE)
         db.delete(existing_like)
-        post.like_count -= 1 # 카운트 감소
+        post.like_count -= 1
         action = "unliked"
     else:
-        # 추가 (INSERT)
         new_like = PostLike(post_id=post_id, user_id=user_id)
         db.add(new_like)
-        post.like_count += 1 # 카운트 증가
+        post.like_count += 1
         action = "liked"
         
     db.commit()
     return {"action": action, "count": post.like_count}
 
+# ---------------------------------------------------------
+# 스크랩 토글
+# ---------------------------------------------------------
 def toggle_scrap(db: Session, post_id: int, user_id: int):
     post = db.query(Post).filter(Post.id == post_id).first()
     if not post:
@@ -138,7 +179,9 @@ def toggle_scrap(db: Session, post_id: int, user_id: int):
     db.commit()
     return {"action": action, "count": post.scrap_count}
 
-
+# ---------------------------------------------------------
+# 내가 쓴 글 조회
+# ---------------------------------------------------------
 def get_my_posts(db: Session, user_id: int, skip: int = 0, limit: int = 10):
     return db.query(Post)\
         .options(*get_post_options())\
@@ -146,11 +189,13 @@ def get_my_posts(db: Session, user_id: int, skip: int = 0, limit: int = 10):
         .order_by(Post.created_at.desc())\
         .offset(skip).limit(limit).all()
 
-
+# ---------------------------------------------------------
+# 내가 스크랩한 글 조회
+# ---------------------------------------------------------
 def get_my_scraps(db: Session, user_id: int, skip: int = 0, limit: int = 10):
     return db.query(Post)\
         .join(PostScrap, Post.id == PostScrap.post_id)\
         .options(*get_post_options())\
         .filter(PostScrap.user_id == user_id)\
         .order_by(PostScrap.user_id.desc()) \
-        .offset(skip).limit(limit).all() 
+        .offset(skip).limit(limit).all()

@@ -19,28 +19,37 @@ def create_post(
 ):
     return crud.create_post(db=db, post=post, user_id=current_user.id)
 
-@router.get("/posts", response_model=List[schemas.PostResponse])
+@router.get("/posts", response_model=List[schemas.PostListResponse])
 def read_posts(
     page: int = 1,
     limit: int = 10, 
     sort: str = "latest", 
     category: str = None, 
     search: str = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(deps.get_current_user_optional)
 ):
-    # 페이지 번호를 건너뛸 개수(skip)로 변환
+    user_id = current_user.id if current_user else None
+
     skip = (page - 1) * limit
 
     if sort == "best":
         return crud.get_best_posts(db, skip=skip, limit=limit)
-    return crud.get_posts(db, skip=skip, limit=limit, category=category)
+    
+    return crud.get_posts(db, skip=skip, limit=limit, category=category, user_id=user_id)
 
 # 게시글 상세 조회
 @router.get("/posts/{post_id}", response_model=schemas.PostResponse)
-def read_post(post_id: int, db: Session = Depends(get_db)):
-    post = crud.get_post(db, post_id=post_id)
+def read_post(
+    post_id: int,
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(deps.get_current_user_optional) 
+):
+    user_id = current_user.id if current_user else None
+    
+    post = crud.get_post(db, post_id=post_id, user_id=user_id)
     if not post:
-        raise HTTPException(status_code=404, detail="게시글을 찾을 수 없습니다.")
+        raise HTTPException(status_code=404, detail="Post not found")
     return post
 
 # 댓글 작성
