@@ -7,10 +7,15 @@ from core import security
 from database import get_db
 from models.user import User
 
-# 토큰이 어디에 있는지 알려줌 (Header: Authorization: Bearer <token>)
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl="/api/v1/auth/login"
+)
 
-# DB 세션 가져오기
+oauth2_scheme_optional = OAuth2PasswordBearer(
+    tokenUrl="/api/v1/auth/login",
+    auto_error=False 
+)
+
 def get_db_session() -> Generator:
     try:
         db = get_db()
@@ -18,7 +23,6 @@ def get_db_session() -> Generator:
     except Exception:
         pass
 
-# 현재 로그인한 유저 가져오기
 def get_current_user(
     db: Session = Depends(get_db),
     token: str = Depends(oauth2_scheme)
@@ -30,7 +34,6 @@ def get_current_user(
     )
     
     try:
-        # 토큰 해독
         payload = jwt.decode(token, security.SECRET_KEY, algorithms=[security.ALGORITHM])
         user_id: str = payload.get("sub")
         if user_id is None:
@@ -38,9 +41,31 @@ def get_current_user(
     except JWTError:
         raise credentials_exception
     
-    # DB에서 유저 찾기
     user = db.query(User).filter(User.id == int(user_id)).first()
     if user is None:
         raise credentials_exception
+        
+    return user
+
+
+def get_current_user_optional(
+    db: Session = Depends(get_db),
+    token: Optional[str] = Depends(oauth2_scheme_optional)
+) -> Optional[User]:
+    if not token:
+        return None
+    
+    try:
+        # 토큰 해독 시도
+        payload = jwt.decode(token, security.SECRET_KEY, algorithms=[security.ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            return None
+    except JWTError:
+        return None
+    
+    user = db.query(User).filter(User.id == int(user_id)).first()
+    if not user:
+        return None
         
     return user

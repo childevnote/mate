@@ -36,6 +36,8 @@ class PostResponse(PostBase):
     comment_count: int
     like_count: int
     scrap_count: int
+    is_liked: bool = False
+    is_scrapped: bool = False
     class Config:
         from_attributes = True
 
