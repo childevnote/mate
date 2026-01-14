@@ -128,6 +128,16 @@ def get_comments_by_post(db: Session, post_id: int, skip: int = 0, limit: int = 
         .offset(skip).limit(limit).all()
 
 # ---------------------------------------------------------
+# 내가 쓴 댓글 조회
+# ---------------------------------------------------------
+def get_comments_by_author(db: Session, user_id: int, skip: int = 0, limit: int = 50):
+    return db.query(Comment)\
+        .options(joinedload(Comment.post)) \
+        .filter(Comment.author_id == user_id)\
+        .order_by(Comment.created_at.desc())\
+        .offset(skip).limit(limit).all()
+
+# ---------------------------------------------------------
 # 좋아요 토글
 # ---------------------------------------------------------
 def toggle_like(db: Session, post_id: int, user_id: int):

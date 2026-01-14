@@ -19,6 +19,26 @@ def create_post(
 ):
     return crud.create_post(db=db, post=post, user_id=current_user.id)
 
+# 내가 쓴 글 조회
+@router.get("/posts/me", response_model=List[schemas.PostListResponse])
+def read_my_posts(
+    skip: int = 0,
+    limit: int = 10,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user)
+):
+    return crud.get_my_posts(db, user_id=current_user.id, skip=skip, limit=limit)
+
+# 내가 스크랩한 글 조회
+@router.get("/posts/scrapped", response_model=List[schemas.PostListResponse])
+def read_my_scraps(
+    skip: int = 0,
+    limit: int = 10,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user)
+):
+    return crud.get_my_scraps(db, user_id=current_user.id, skip=skip, limit=limit)
+
 @router.get("/posts", response_model=List[schemas.PostListResponse])
 def read_posts(
     page: int = 1,
@@ -61,17 +81,22 @@ def create_comment(
 ):
     return crud.create_comment(db=db, comment=comment, user_id=current_user.id)
 
-# 댓글 목록 조회 (405 에러 해결)
+# 댓글 목록 조회 
 @router.get("/comments", response_model=List[schemas.CommentResponse])
 def read_comments(
-    post: int,    # 프론트엔드가 보내는 쿼리 파라미터 이름 (?post=9)
+    post: Optional[int] = None,
+    author: Optional[int] = None,
     skip: int = 0, 
     limit: int = 50, 
     db: Session = Depends(get_db)
 ):
-    # crud 함수 호출 시 post_id 인자에 post 값을 전달
-    return crud.get_comments_by_post(db, post_id=post, skip=skip, limit=limit)
-
+    if post:
+        return crud.get_comments_by_post(db, post_id=post, skip=skip, limit=limit)
+    elif author:
+        return crud.get_comments_by_author(db, user_id=author, skip=skip, limit=limit)
+    else:
+        return []
+    
 # 좋아요 버튼 클릭
 @router.post("/posts/{post_id}/like")
 def like_post(

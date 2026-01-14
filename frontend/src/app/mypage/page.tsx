@@ -9,11 +9,12 @@ import { AxiosError } from "axios";
 
 // 상태 및 서비스
 import { userAtom } from "@/store/authStore";
-import { userService } from "@/services/userService";
+import { postService } from "@/services/postService"; 
 import { authService } from "@/services/authService";
+import { userService } from "@/services/userService"; 
 
 // 타입 정의
-import { Post } from "@/types/post";
+import { Post, PostSummary } from "@/types/post";
 import { Comment as IComment } from "@/types/comment";
 import { UserActionResponse } from "@/types/user";
 import { PasskeyItem, User } from "@/types/auth";
@@ -27,24 +28,24 @@ export default function MyPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabType>("info");
 
-  // 1. 내가 쓴 글 조회
-  const { data: myPosts } = useQuery<Post[]>({
-    queryKey: ["myPosts", user?.id],
-    queryFn: () => userService.getMyPosts(user!.id),
+  // 1. 내가 쓴 글 조회 (postService 사용)
+  const { data: myPosts } = useQuery({
+    queryKey: ["myPosts"], // 키 단순화
+    queryFn: () => postService.getMyPosts(),
     enabled: !!user && activeTab === "posts",
   });
 
-  // 2. 내가 쓴 댓글 조회
-  const { data: myComments } = useQuery<IComment[]>({
+  // 2. 내가 쓴 댓글 조회 (postService 사용)
+  const { data: myComments } = useQuery({
     queryKey: ["myComments", user?.id],
-    queryFn: () => userService.getMyComments(user!.id),
+    queryFn: () => postService.getMyComments(user!.id),
     enabled: !!user && activeTab === "comments",
   });
 
-  // 3. 스크랩한 글 조회
-  const { data: scrappedPosts } = useQuery<Post[]>({
+  // 3. 스크랩한 글 조회 (postService 사용)
+  const { data: scrappedPosts } = useQuery({
     queryKey: ["scrappedPosts"],
-    queryFn: () => userService.getScrappedPosts(),
+    queryFn: () => postService.getMyScraps(),
     enabled: !!user && activeTab === "scraps",
   });
 
@@ -166,11 +167,11 @@ function TabButton({ label, isActive, onClick }: TabButtonProps) {
   );
 }
 
-// 내 정보 섹션 (비밀번호 변경 삭제, 기기/인증 관리 추가)
+// 내 정보 섹션
 function MyInfoSection({ user }: { user: User }) {
   const router = useRouter();
   const [, setUser] = useAtom(userAtom);
-  const queryClient = useQueryClient(); // 목록 새로고침용
+  const queryClient = useQueryClient();
 
   // 1. 등록된 기기 목록 조회 Query
   const { data: devices, isLoading: isDevicesLoading } = useQuery<PasskeyItem[]>({
@@ -182,7 +183,6 @@ function MyInfoSection({ user }: { user: User }) {
   const deleteDeviceMutation = useMutation({
     mutationFn: authService.deletePasskey,
     onSuccess: () => {
-      // 목록 새로고침
       queryClient.invalidateQueries({ queryKey: ["myPasskeys"] });
       alert("기기가 삭제되었습니다.");
     },
@@ -191,7 +191,7 @@ function MyInfoSection({ user }: { user: User }) {
     },
   });
 
-  // 계정 삭제 Mutation (기존 유지)
+  // 계정 삭제 Mutation
   const deleteAccountMutation = useMutation<UserActionResponse, AxiosError>({
     mutationFn: userService.deleteAccount,
     onSuccess: () => {
@@ -211,7 +211,7 @@ function MyInfoSection({ user }: { user: User }) {
 
   return (
     <div className="space-y-10 max-w-2xl animate-in fade-in slide-in-from-bottom-2 duration-500">
-      {/* 1. 학교 인증 섹션 (기존 유지) */}
+      {/* 1. 학교 인증 섹션 */}
       <section>
         <h3 className="text-xl font-bold mb-4 text-gray-900 flex items-center gap-2">
           🏫 학교 인증
@@ -219,7 +219,6 @@ function MyInfoSection({ user }: { user: User }) {
             <span className="text-green-500 text-sm font-normal">✔ 완료됨</span>
           )}
         </h3>
-        {/* ... (기존 학교 인증 UI 유지) ... */}
         <div className="p-5 bg-gray-50 rounded-xl border border-gray-100">
           {user.is_student_verified ? (
             <div>
@@ -242,7 +241,7 @@ function MyInfoSection({ user }: { user: User }) {
         </div>
       </section>
 
-      {/* 2. 로그인 기기 관리 (업그레이드 됨 ⭐) */}
+      {/* 2. 로그인 기기 관리 */}
       <section>
         <div className="flex justify-between items-end mb-4">
             <h3 className="text-xl font-bold text-gray-900">🔐 로그인 기기 관리</h3>
@@ -252,12 +251,10 @@ function MyInfoSection({ user }: { user: User }) {
         </div>
         
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-            {/* 기기 목록 헤더 */}
             <div className="bg-gray-50 px-5 py-3 border-b border-gray-100 flex justify-between items-center">
                 <span className="text-sm font-bold text-gray-600">등록된 기기 목록</span>
             </div>
 
-            {/* 기기 리스트 */}
             <div className="divide-y divide-gray-100">
                 {isDevicesLoading ? (
                     <div className="p-5 text-center text-sm text-gray-400">불러오는 중...</div>
@@ -265,7 +262,6 @@ function MyInfoSection({ user }: { user: User }) {
                     devices.map((device) => (
                         <div key={device.id} className="p-5 flex justify-between items-center hover:bg-gray-50 transition duration-150">
                             <div className="flex items-center gap-3">
-                                {/* 기기 아이콘 (스마트폰/PC 구분은 UserAgent 파싱 필요하지만 지금은 통일) */}
                                 <div className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center text-xl">
                                     🔑
                                 </div>
@@ -294,18 +290,16 @@ function MyInfoSection({ user }: { user: User }) {
                 )}
             </div>
 
-            {/* 기기 추가 등록 섹션 (푸터) */}
             <div className="p-5 bg-gray-50 border-t border-gray-100">
                  <p className="text-xs text-gray-500 mb-3">
                     현재 기기를 로그인 수단으로 추가하려면 아래 버튼을 누르세요.
                  </p>
-                 {/* 기존에 만드신 기기 등록 버튼 */}
                  <RegisterPasskeyButton user={user} />
             </div>
         </div>
       </section>
 
-      {/* 3. 계정 삭제 (기존 유지) */}
+      {/* 3. 계정 삭제 */}
       <section>
         <h3 className="text-xl font-bold mb-4 text-red-600">계정 관리</h3>
         <div className="p-5 bg-red-50 rounded-xl border border-red-100 flex justify-between items-center">
@@ -336,7 +330,7 @@ function MyInfoSection({ user }: { user: User }) {
 // ----------------------------------------------------------------------
 
 interface PostListProps {
-  posts: Post[] | undefined;
+  posts: (PostSummary)[] | undefined; 
   emptyMsg: string;
 }
 
@@ -370,7 +364,6 @@ function PostList({ posts, emptyMsg }: PostListProps) {
           </h4>
           <div className="flex gap-3 text-xs text-gray-500 font-medium">
             <span>👁️ {post.view_count}</span>
-            <span>❤️ {post.like_count}</span>
             <span>💬 {post.comment_count}</span>
           </div>
         </Link>

@@ -1,4 +1,5 @@
 import { api } from "@/lib/axios";
+import { PostSummary } from "@/types/post";
 
 export const postService = {
   getPosts: async (page = 1, search = "", category = "", sort = "latest") => {
@@ -69,5 +70,25 @@ export const postService = {
   toggleScrap: async (postId: number) => {
     const { data } = await api.post(`/api/v1/community/posts/${postId}/scrap`);
     return data;
-  }
+  },
+
+  // 내가 쓴 글 조회
+  getMyPosts: async () => {
+    // 백엔드의 /posts/me 엔드포인트 호출
+    const { data } = await api.get<PostSummary[]>("/api/v1/community/posts/me");
+    return data;
+  },
+
+  // 내가 스크랩한 글 조회
+  getMyScraps: async () => {
+    // 백엔드의 /posts/scrapped 엔드포인트 호출
+    const { data } = await api.get<PostSummary[]>("/api/v1/community/posts/scrapped");
+    return data;
+  },
+
+  // 내 댓글 조회
+  getMyComments: async (authorId: number) => {
+    const { data } = await api.get(`/api/v1/community/comments?author=${authorId}`);
+    return data;
+  },
 };
