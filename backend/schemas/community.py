@@ -65,5 +65,6 @@ class CommentResponse(CommentBase):
     author_university: str
     reply_count: int
     is_author: bool = False
+    post_title: Optional[str] = None
     class Config:
         from_attributes = True

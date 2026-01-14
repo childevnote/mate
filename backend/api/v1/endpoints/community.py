@@ -72,6 +72,22 @@ def read_post(
         raise HTTPException(status_code=404, detail="Post not found")
     return post
 
+# 게시글 삭제
+@router.delete("/posts/{post_id}")
+def delete_post(
+    post_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user)
+):
+    result = crud.delete_post(db, post_id=post_id, user_id=current_user.id)
+    
+    if result == "not_found":
+        raise HTTPException(status_code=404, detail="게시글을 찾을 수 없습니다.")
+    elif result == "not_authorized":
+        raise HTTPException(status_code=403, detail="삭제 권한이 없습니다.")
+        
+    return {"status": "success", "message": "게시글이 삭제되었습니다."}
+
 # 댓글 작성
 @router.post("/comments", response_model=schemas.CommentResponse)
 def create_comment(
@@ -96,6 +112,22 @@ def read_comments(
         return crud.get_comments_by_author(db, user_id=author, skip=skip, limit=limit)
     else:
         return []
+    
+# 댓글 삭제
+@router.delete("/comments/{comment_id}")
+def delete_comment(
+    comment_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user)
+):
+    result = crud.delete_comment(db, comment_id=comment_id, user_id=current_user.id)
+    
+    if result == "not_found":
+        raise HTTPException(status_code=404, detail="댓글을 찾을 수 없습니다.")
+    elif result == "not_authorized":
+        raise HTTPException(status_code=403, detail="삭제 권한이 없습니다.")
+        
+    return {"status": "success", "message": "댓글이 삭제되었습니다."}
     
 # 좋아요 버튼 클릭
 @router.post("/posts/{post_id}/like")

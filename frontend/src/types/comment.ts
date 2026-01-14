@@ -8,6 +8,7 @@ export interface Comment {
   author_nickname: string;
   is_author: boolean;
   author_university?: string;
+  post_title?: string;
 
   // 대댓글 구조
   parent_id: number | null; 
