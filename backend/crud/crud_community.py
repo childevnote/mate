@@ -29,6 +29,24 @@ def create_post(db: Session, post: PostCreate, user_id: int):
     db.refresh(db_post)
     return db_post
 
+# ---------------------------------------------------------
+# 게시글 삭제
+# ---------------------------------------------------------
+def delete_post(db: Session, post_id: int, user_id: int):
+    post = db.query(Post).filter(Post.id == post_id).first()
+    
+    # 글이 없거나
+    if not post:
+        return "not_found"
+    
+    # 작성자가 아니면 삭제 불가
+    if post.author_id != user_id:
+        return "not_authorized"
+    
+    db.delete(post)
+    db.commit()
+    return "success"
+
 def get_best_posts(db: Session, skip: int = 0, limit: int = 5):
     # 1. 후보군 조회
     candidates = db.query(Post)\
@@ -118,6 +136,26 @@ def create_comment(db: Session, comment: CommentCreate, user_id: int):
     return db_comment
 
 # ---------------------------------------------------------
+# 댓글 삭제
+# ---------------------------------------------------------
+def delete_comment(db: Session, comment_id: int, user_id: int):
+    comment = db.query(Comment).filter(Comment.id == comment_id).first()
+    
+    if not comment:
+        return "not_found"
+        
+    if comment.author_id != user_id:
+        return "not_authorized"
+        
+    # 게시글의 댓글 수 감소 (comment_count - 1)
+    if comment.post:
+        comment.post.comment_count = max(0, comment.post.comment_count - 1)
+    
+    db.delete(comment)
+    db.commit()
+    return "success"
+
+# ---------------------------------------------------------
 # 댓글 목록 조회
 # ---------------------------------------------------------
 def get_comments_by_post(db: Session, post_id: int, skip: int = 0, limit: int = 50):
@@ -131,11 +169,19 @@ def get_comments_by_post(db: Session, post_id: int, skip: int = 0, limit: int = 
 # 내가 쓴 댓글 조회
 # ---------------------------------------------------------
 def get_comments_by_author(db: Session, user_id: int, skip: int = 0, limit: int = 50):
-    return db.query(Comment)\
+    comments = db.query(Comment)\
         .options(joinedload(Comment.post)) \
         .filter(Comment.author_id == user_id)\
         .order_by(Comment.created_at.desc())\
         .offset(skip).limit(limit).all()
+        
+    for comment in comments:
+        if comment.post:
+            comment.post_title = comment.post.title
+        else:
+            comment.post_title = "삭제된 게시글입니다."
+            
+    return comments
 
 # ---------------------------------------------------------
 # 좋아요 토글
