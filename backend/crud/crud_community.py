@@ -148,12 +148,18 @@ def delete_comment(db: Session, comment_id: int, user_id: int):
         return "not_authorized"
         
     # 게시글의 댓글 수 감소 (comment_count - 1)
-    if comment.post:
-        comment.post.comment_count = max(0, comment.post.comment_count - 1)
-    
-    db.delete(comment)
-    db.commit()
-    return "success"
+    if comment.replies:
+        comment.is_deleted = True
+        comment.content = "삭제된 댓글입니다." 
+        db.commit()
+        return "success"
+    else:
+        if comment.post:
+             comment.post.comment_count = max(0, comment.post.comment_count - 1)
+             
+        db.delete(comment)
+        db.commit()
+        return "success"
 
 # ---------------------------------------------------------
 # 댓글 목록 조회

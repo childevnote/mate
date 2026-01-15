@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database import Base
@@ -87,6 +87,7 @@ class Comment(Base):
 
     # 대댓글 (Self Reference)
     parent_id = Column(Integer, ForeignKey("comments.id", ondelete="CASCADE"), nullable=True)
+    is_deleted = Column(Boolean, default=False)
 
     # 관계 설정
     post = relationship("Post", back_populates="comments")
@@ -94,6 +95,7 @@ class Comment(Base):
     
     # 대댓글 구조 (부모 -> 자식들)
     parent = relationship("Comment", remote_side=[id], backref="replies")
+    
     
     @property
     def reply_count(self):

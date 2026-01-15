@@ -75,6 +75,7 @@ export default function CommentSection({ postId, onRequireLogin }: CommentSectio
         created_at: new Date().toISOString(),
         parent_id: parentId || null,
         is_author: true,
+        is_deleted:false
       };
 
       // 캐시 업데이트
@@ -259,7 +260,14 @@ function CommentItem({
   };
 
   const isMyComment = user?.id === comment.author_id;
-
+  if (comment.is_deleted) {
+    return (
+      <div className={`p-4 rounded-xl border border-gray-100 bg-gray-50 text-gray-400 text-sm italic ${isReply ? 'ml-6' : ''}`}>
+        삭제된 댓글입니다.
+      </div>
+    );
+  }
+  
   return (
     <div className={`group bg-white p-4 rounded-xl border border-gray-100 shadow-sm transition-colors ${isReply ? 'bg-gray-50/50' : ''}`}>
       <div className="flex justify-between items-start mb-2">

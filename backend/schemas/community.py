@@ -69,5 +69,7 @@ class CommentResponse(CommentBase):
     is_author: bool = False
     post_title: Optional[str] = None
     post_id: Optional[int] = None
+    is_deleted: bool
+    
     class Config:
         from_attributes = True
