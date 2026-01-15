@@ -48,7 +48,7 @@ export const postService = {
   createComment: async (
     postId: number,
     content: string,
-    parentId: number | null = null
+    parentId?: number
   ) => {
     const response = await api.post("/api/v1/community/comments", {
       content: content,

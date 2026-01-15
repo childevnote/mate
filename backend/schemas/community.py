@@ -53,8 +53,10 @@ class CommentBase(BaseModel):
     parent_id: Optional[int] = None  # 대댓글일 경우 부모 댓글 ID
 
 # 댓글 작성 요청 (Request)
-class CommentCreate(CommentBase):
-    pass
+class CommentCreate(BaseModel):
+    content: str
+    parent_id: Optional[int] = None
+    post_id: int
 
 # 댓글 응답 (Response) 
 class CommentResponse(CommentBase):
@@ -66,5 +68,6 @@ class CommentResponse(CommentBase):
     reply_count: int
     is_author: bool = False
     post_title: Optional[str] = None
+    post_id: Optional[int] = None
     class Config:
         from_attributes = True
