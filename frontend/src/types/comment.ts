@@ -22,4 +22,7 @@ export interface Comment {
 
 export interface CommentSectionProps {
   postId: number;
+  postAuthorId: number;
+  comments: Comment[];
+  onRequireLogin: () => void;
 }

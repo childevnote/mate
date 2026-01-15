@@ -27,10 +27,11 @@ export default function PostDetail({ postId }: PostDetailProps) {
 
   const startTime = useRef<number>(0);
 
+  // 1. 글 상세 데이터 요청
   const { 
     data: post, 
-    isLoading, 
-    isError, 
+    isLoading: isPostLoading, 
+    isError,
     isFetching
   } = useQuery<Post>({
     queryKey: ["post", postId], 
@@ -40,6 +41,18 @@ export default function PostDetail({ postId }: PostDetailProps) {
     },
   });
 
+  // 2. 댓글 데이터도 여기서 같이 요청 (병렬 로딩)
+  const { 
+    data: comments = [], 
+    isLoading: isCommentLoading 
+  } = useQuery({
+    queryKey: ["comments", postId],
+    queryFn: () => postService.getComments(postId),
+  });
+
+  // 3. 둘 중 하나라도 로딩 중이면 전체 로딩 화면 표시
+  const isAllLoading = isPostLoading || isCommentLoading;
+
   useEffect(() => {
     if (!isFetching && startTime.current > 0) {
       const duration = performance.now() - startTime.current;
@@ -48,7 +61,7 @@ export default function PostDetail({ postId }: PostDetailProps) {
     }
   }, [isFetching]);
 
-  // ... (좋아요/스크랩/삭제 Mutation 로직은 기존 코드 그대로 유지) ...
+  // 좋아요 Mutation
   const likeMutation = useMutation({
     mutationFn: postService.toggleLike,
     onMutate: async () => {
@@ -76,6 +89,7 @@ export default function PostDetail({ postId }: PostDetailProps) {
     },
   });
 
+  // 스크랩 Mutation
   const scrapMutation = useMutation({
     mutationFn: postService.toggleScrap,
     onMutate: async () => {
@@ -103,6 +117,7 @@ export default function PostDetail({ postId }: PostDetailProps) {
     },
   });
 
+  // 삭제 Mutation
   const deleteMutation = useMutation({
     mutationFn: postService.deletePost,
     onSuccess: () => {
@@ -126,18 +141,20 @@ export default function PostDetail({ postId }: PostDetailProps) {
     if (confirm("정말 삭제하시겠습니까?")) deleteMutation.mutate(postId);
   };
 
-  // 로딩 시 텍스트 대신 스켈레톤 표시
-  if (isLoading) {
+  if (isError) return <div className="py-20 text-center text-red-500">글을 찾을 수 없습니다.</div>;
+
+  // 통합 로딩 화면 (글 스켈레톤 + 댓글 스켈레톤)
+  if (isAllLoading || !post) {
     return (
       <article className="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-800 overflow-hidden min-h-screen">
         <div className="p-6 border-b border-gray-100 dark:border-zinc-800">
           <div className="flex justify-between items-center mb-4">
-             <Skeleton className="h-6 w-16" /> {/* 카테고리 */}
-             <Skeleton className="h-4 w-32" /> {/* 날짜 */}
+             <Skeleton className="h-6 w-16" /> 
+             <Skeleton className="h-4 w-32" /> 
           </div>
-          <Skeleton className="h-8 w-3/4 mb-4" /> {/* 제목 */}
+          <Skeleton className="h-8 w-3/4 mb-4" /> 
           <div className="flex items-center gap-3">
-            <Skeleton className="w-10 h-10 rounded-full" /> {/* 프사 */}
+            <Skeleton className="w-10 h-10 rounded-full" /> 
             <div className="space-y-2">
               <Skeleton className="h-4 w-24" />
               <Skeleton className="h-3 w-16" />
@@ -145,18 +162,32 @@ export default function PostDetail({ postId }: PostDetailProps) {
           </div>
         </div>
         <div className="p-6">
-          <Skeleton className="h-64 w-full rounded-lg mb-6" /> {/* 이미지/본문 영역 */}
+          <Skeleton className="h-64 w-full rounded-lg mb-6" />
           <div className="space-y-2">
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-5/6" />
           </div>
         </div>
+        {/* 댓글 스켈레톤 연결 */}
+        <div className="bg-gray-50 dark:bg-zinc-900 border-t border-gray-100 dark:border-zinc-800 p-6">
+            <Skeleton className="h-6 w-20 mb-6" />
+            <Skeleton className="h-24 w-full rounded-xl mb-8" />
+            <div className="space-y-4">
+            {[1, 2].map((i) => (
+                <div key={i} className="bg-white p-4 rounded-xl border border-gray-100 h-24">
+                <div className="flex justify-between mb-3">
+                    <div className="flex gap-2"> <Skeleton className="w-16 h-4" /> <Skeleton className="w-10 h-4" /> </div>
+                    <Skeleton className="w-20 h-3" />
+                </div>
+                <Skeleton className="w-full h-3 mb-2" />
+                </div>
+            ))}
+            </div>
+        </div>
       </article>
     );
   }
-
-  if (isError || !post) return <div className="py-20 text-center text-red-500">글을 찾을 수 없습니다.</div>;
 
   const isAuthor = user?.nickname === post.author_nickname;
   const categoryLabel = CATEGORY_LABELS[post.category] || post.category;
@@ -164,6 +195,7 @@ export default function PostDetail({ postId }: PostDetailProps) {
   return (
     <>
       <article className="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-800 overflow-hidden">
+        {/* 헤더 */}
         <div className="p-6 border-b border-gray-100 dark:border-zinc-800">
           <div className="flex justify-between items-center mb-4">
             <span className="bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300 text-xs font-bold px-2.5 py-1 rounded">
@@ -191,6 +223,7 @@ export default function PostDetail({ postId }: PostDetailProps) {
           </div>
         </div>
 
+        {/* 본문 */}
         <div className="p-6 min-h-[200px]">
           {post.image && (
             <div className="mb-6 rounded-lg overflow-hidden border border-gray-100 dark:border-zinc-800">
@@ -202,8 +235,8 @@ export default function PostDetail({ postId }: PostDetailProps) {
           </p>
         </div>
 
+        {/* 버튼 */}
         <div className="px-6 py-8 flex justify-center gap-4">
-           {/* ... (좋아요/스크랩 버튼 유지) ... */}
            <button onClick={handleLike} disabled={likeMutation.isPending} className={`flex items-center gap-2 px-6 py-3 rounded-full border transition-all active:scale-95 ${post.is_liked ? "bg-red-50 border-red-200 text-red-600 font-bold shadow-inner" : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50"}`}>
             <ThumbsUp className={`w-5 h-5 ${post.is_liked ? "fill-current" : ""}`} />
             <span>좋아요 {post.like_count}</span>
@@ -215,6 +248,7 @@ export default function PostDetail({ postId }: PostDetailProps) {
           </button>
         </div>
 
+        {/* 푸터 (목록/수정/삭제) */}
         <div className="p-6 bg-gray-50 dark:bg-zinc-800/50 flex justify-between items-center border-t border-gray-100 dark:border-zinc-800">
            <Link href="/" className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition">목록으로</Link>
           {isAuthor && (
@@ -225,10 +259,10 @@ export default function PostDetail({ postId }: PostDetailProps) {
           )}
         </div>
 
-        {/* 🔥 [수정 2] postAuthorId 전달 (중요) */}
         <CommentSection 
           postId={postId} 
-          postAuthorId={post.author_id} // 이 부분이 있어야 작성자 뱃지가 고정됩니다.
+          postAuthorId={post.author_id}
+          comments={comments} 
           onRequireLogin={() => setIsLoginModalOpen(true)} 
         />
       </article>

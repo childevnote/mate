@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
@@ -62,6 +62,7 @@ def read_posts(
 @router.get("/posts/{post_id}", response_model=schemas.PostResponse)
 def read_post(
     post_id: int,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User | None = Depends(deps.get_current_user_optional) 
 ):
@@ -70,6 +71,7 @@ def read_post(
     post = crud.get_post(db, post_id=post_id, user_id=user_id)
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
+    background_tasks.add_task(crud.increase_view_count, db, post_id)
     return post
 
 # 게시글 삭제

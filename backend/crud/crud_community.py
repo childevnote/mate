@@ -1,5 +1,7 @@
+# backend/crud/crud_community.py
+
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, or_
 from datetime import timedelta
 from models.community import Post, Comment, PostLike, PostScrap
 from models.user import User
@@ -10,6 +12,7 @@ from schemas.community import PostCreate, CommentCreate
 # ---------------------------------------------------------
 def get_post_options():
     return [
+        # 게시글 작성자와 그 작성자의 대학교 정보까지 한 번에 JOIN
         joinedload(Post.author).joinedload(User.university),
     ]
 
@@ -35,11 +38,9 @@ def create_post(db: Session, post: PostCreate, user_id: int):
 def delete_post(db: Session, post_id: int, user_id: int):
     post = db.query(Post).filter(Post.id == post_id).first()
     
-    # 글이 없거나
     if not post:
         return "not_found"
     
-    # 작성자가 아니면 삭제 불가
     if post.author_id != user_id:
         return "not_authorized"
     
@@ -48,17 +49,16 @@ def delete_post(db: Session, post_id: int, user_id: int):
     return "success"
 
 def get_best_posts(db: Session, skip: int = 0, limit: int = 5):
-    # 1. 후보군 조회
+    # 지난 7일간의 게시글만 조회
     candidates = db.query(Post)\
         .options(*get_post_options())\
         .filter(Post.created_at >= func.now() - timedelta(days=7))\
         .all()
 
-    # 2. 점수 계산
+    # 파이썬 레벨에서 점수 계산 (데이터가 많아지면 DB 쿼리로 옮겨야 함)
     def calculate_score(post):
         return post.view_count + (post.like_count * 3) + (post.comment_count * 5)
 
-    # 3. 정렬 및 페이징
     sorted_posts = sorted(candidates, key=calculate_score, reverse=True)
     final_posts = sorted_posts[skip : skip + limit]
     
@@ -74,28 +74,30 @@ def get_posts(db: Session, skip: int = 0, limit: int = 10, category: str = None,
     if category and category != "ALL":
         query = query.filter(Post.category == category)
         
-    # 단순히 목록만 가져옴 (빠름)
     posts = query.order_by(Post.created_at.desc()).offset(skip).limit(limit).all()
     
-    # 목록에서는 내 좋아요 여부 확인 안 함
     for post in posts:
         post.is_liked = False
         post.is_scrapped = False
             
     return posts
 
+def increase_view_count(db: Session, post_id: int):
+    # 별도 트랜잭션으로 처리
+    post = db.query(Post).filter(Post.id == post_id).first()
+    if post:
+        post.view_count += 1
+        db.commit()
 
+# 게시글 상세 조회
 def get_post(db: Session, post_id: int, user_id: int | None = None):
+    # 1. 게시글과 작성자 정보를 한 번에 가져옴
     post = db.query(Post).options(*get_post_options()).filter(Post.id == post_id).first()
     
     if not post:
         return None
 
-    post.view_count += 1
-    db.commit()
-    db.refresh(post)
-
-    # 상세 페이지에서는 내가 눌렀는지 확인
+    # 3. 좋아요/스크랩 여부 확인
     if user_id:
         like_record = db.query(PostLike).filter(
             PostLike.post_id == post_id, 
@@ -147,7 +149,6 @@ def delete_comment(db: Session, comment_id: int, user_id: int):
     if comment.author_id != user_id:
         return "not_authorized"
         
-    # 게시글의 댓글 수 감소 (comment_count - 1)
     if comment.replies:
         comment.is_deleted = True
         comment.content = "삭제된 댓글입니다." 
@@ -162,11 +163,14 @@ def delete_comment(db: Session, comment_id: int, user_id: int):
         return "success"
 
 # ---------------------------------------------------------
-# 댓글 목록 조회
+# 댓글 목록 조회 
 # ---------------------------------------------------------
 def get_comments_by_post(db: Session, post_id: int, skip: int = 0, limit: int = 50):
     return db.query(Comment)\
-        .options(joinedload(Comment.author))\
+        .options(
+            # 댓글 작성자의 '대학교' 정보까지 미리 로딩 (N+1 문제 해결)
+            joinedload(Comment.author).joinedload(User.university)
+        )\
         .filter(Comment.post_id == post_id)\
         .order_by(Comment.created_at.asc())\
         .offset(skip).limit(limit).all()

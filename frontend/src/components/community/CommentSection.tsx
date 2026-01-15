@@ -1,30 +1,19 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import { userAtom } from "@/store/authStore";
 import { postService } from "@/services/postService";
 import { Send, Trash2, MessageSquare, CornerDownRight } from "lucide-react";
 import { Comment } from "@/types/comment";
-import Skeleton from "@/components/common/Skeleton";
 import { User } from "@/types/auth";
+import { CommentSectionProps } from "@/types/comment";
 
-interface CommentSectionProps {
-  postId: number;
-  postAuthorId: number;
-  onRequireLogin: () => void;
-}
-
-export default function CommentSection({ postId, postAuthorId, onRequireLogin }: CommentSectionProps) {
+export default function CommentSection({ postId, postAuthorId, comments,  onRequireLogin }: CommentSectionProps) {
   const user = useAtomValue(userAtom);
   const queryClient = useQueryClient();
   const [content, setContent] = useState("");
-
-  const { data: comments = [], isLoading } = useQuery<Comment[]>({
-    queryKey: ["comments", postId],
-    queryFn: () => postService.getComments(postId),
-  });
 
   // 부모-자식 구조 정렬
   const { rootComments, childrenMap } = useMemo(() => {
@@ -47,11 +36,57 @@ export default function CommentSection({ postId, postAuthorId, onRequireLogin }:
   const createMutation = useMutation({
     mutationFn: (variables: { text: string; parentId?: number }) =>
       postService.createComment(postId, variables.text, variables.parentId),
-    onSuccess: () => {
-      setContent("");
+    
+    // 요청 즉시 실행 (서버 응답 기다리지 않음)
+    onMutate: async (variables) => {
+      // 진행 중인 갱신 요청 취소 (충돌 방지)
+      await queryClient.cancelQueries({ queryKey: ["comments", postId] });
+
+      // 이전 데이터 스냅샷 (에러 시 복구용)
+      const previousComments = queryClient.getQueryData<Comment[]>(["comments", postId]);
+
+      // 가짜 댓글 만들기 (UI에 즉시 보여줄 데이터)
+      const newComment: Comment = {
+        id: Date.now() + Math.random(), // 임시 ID (매우 큰 숫자)
+        post_id: postId,
+        content: variables.text,
+        author_id: user?.id || 0,
+        author_nickname: user?.nickname || "나", 
+        is_author: user?.id === postAuthorId, // 내가 글쓴이면 true
+        author_university: user?.university || undefined,
+        
+        parent_id: variables.parentId || null,
+        children: [],
+        created_at: new Date().toISOString(),
+        is_deleted: false,
+      };
+
+      // 3. 캐시 강제 업데이트 (화면이 즉시 바뀜)
+      queryClient.setQueryData<Comment[]>(["comments", postId], (old = []) => {
+        return [...old, newComment];
+      });
+
+      return { previousComments };
+    },
+
+    // 에러 나면 원상복구
+    onError: (err, variables, context) => {
+      if (context?.previousComments) {
+        queryClient.setQueryData(["comments", postId], context.previousComments);
+      }
+      alert("댓글 작성에 실패했습니다.");
+    },
+
+    // 성공하든 실패하든 최신 데이터로 동기화
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
       queryClient.invalidateQueries({ queryKey: ["post", postId] });
     },
+    
+    // 성공 시 입력창 비우기 (UI 경험용)
+    onSuccess: () => {
+        setContent("");
+    }
   });
 
   const deleteMutation = useMutation({
@@ -76,30 +111,6 @@ export default function CommentSection({ postId, postAuthorId, onRequireLogin }:
       handleSubmit();
     }
   };
-
-  // 댓글 로딩 스켈레톤 적용
-  if (isLoading) {
-    return (
-      <div className="bg-gray-50 dark:bg-zinc-900 border-t border-gray-100 dark:border-zinc-800 p-6">
-        <Skeleton className="h-6 w-20 mb-6" />
-        <Skeleton className="h-24 w-full rounded-xl mb-8" />
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white p-4 rounded-xl border border-gray-100 h-24">
-              <div className="flex justify-between mb-3">
-                <div className="flex gap-2">
-                   <Skeleton className="w-16 h-4" /> <Skeleton className="w-10 h-4" />
-                </div>
-                <Skeleton className="w-20 h-3" />
-              </div>
-              <Skeleton className="w-full h-3 mb-2" />
-              <Skeleton className="w-2/3 h-3" />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="bg-gray-50 dark:bg-zinc-900 border-t border-gray-100 dark:border-zinc-800 p-6">
