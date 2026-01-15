@@ -23,27 +23,32 @@ class PostCreate(PostBase):
 
 class PostListResponse(BaseModel):
     id: int
-    title: str
     category: str
-    image: Optional[str] = None
-    view_count: int
-    comment_count: int
-    created_at: datetime
-    updated_at: Optional[datetime] = None
+    title: str
+    
+    # 작성자 정보
     author_id: int
     author_nickname: str
-    is_author: bool = False
+    
+    # 조회수와 시간
+    view_count: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
     
     class Config:
         from_attributes = True
 
 # 상세용 응답 (무거운 버전)
 class PostResponse(PostListResponse):
-    like_count: int
-    scrap_count: int
-    is_liked: bool = False
-    is_scrapped: bool = False
-
+    is_author: bool = False      # 본인 글 여부
+    image: Optional[str] = None  # 이미지
+    
+    comment_count: int           # 댓글 수
+    like_count: int              # 좋아요 수
+    scrap_count: int             # 스크랩 수
+    
+    is_liked: bool = False       # 좋아요 여부
+    is_scrapped: bool = False    # 스크랩 여부
 
 
 # 댓글 기본 틀
@@ -70,6 +75,6 @@ class CommentResponse(CommentBase):
     post_title: Optional[str] = None
     post_id: Optional[int] = None
     is_deleted: bool
-    
+
     class Config:
         from_attributes = True

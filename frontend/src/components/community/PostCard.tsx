@@ -9,7 +9,6 @@ interface PostCardProps {
 
 export default function PostCard({ post, showCategory = true }: PostCardProps) {
   const categoryLabel = CATEGORY_LABELS[post.category] || post.category;
-  const hasImage = post.image && post.image !== "string";
 
   return (
     <Link href={`/posts/${post.id}`} className="block group">
@@ -30,10 +29,7 @@ export default function PostCard({ post, showCategory = true }: PostCardProps) {
             <h3 className="text-[15px] font-medium text-gray-800 truncate group-hover:text-primary transition-colors">
               {post.title}
             </h3>
-            {/* 이미지가 있는 글이면 아이콘 표시 */}
-            {hasImage && (
-              <span className="text-xs text-gray-400">📷</span>
-            )}
+
             {/* 새 글이면 N 표시 (24시간 이내) */}
             {new Date().getTime() - new Date(post.created_at).getTime() < 24 * 60 * 60 * 1000 && (
               <span className="text-[10px] font-bold text-red-500 bg-red-50 px-1 rounded">N</span>
@@ -50,12 +46,6 @@ export default function PostCard({ post, showCategory = true }: PostCardProps) {
             <span className="flex items-center gap-0.5">
               👁️ {post.view_count}
             </span>
-            
-            {post.comment_count > 0 && (
-              <span className="flex items-center gap-0.5 text-blue-400">
-                💬 {post.comment_count}
-              </span>
-            )}
           </div>
         </div>
       </div>

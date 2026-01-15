@@ -6,23 +6,20 @@ export interface PostSummary {
   id: number;
   category: BoardCategory;
   title: string;
-  image?: string | null;
-  
   author_id: number;
   author_nickname: string;
-  is_author: boolean;
-
   view_count: number;
-  comment_count: number;
-  
   created_at: string;
 }
 
 // 상세용 포스트 타입 (PostDetail)
 // 목록용 타입(PostSummary)을 상속받아 확장
 export interface PostDetail extends PostSummary {
+  is_author: boolean;
+  image?: string | null;
+  comment_count: number;
   like_count: number;
-    is_liked: boolean;     
+  is_liked: boolean;     
   is_scrapped: boolean;
 }
 
