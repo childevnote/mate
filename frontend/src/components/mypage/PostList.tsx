@@ -38,7 +38,6 @@ export default function PostList({ posts, emptyMsg, mode, onAction }: PostListPr
             </h4>
             <div className="flex gap-3 text-xs text-gray-500 font-medium">
               <span>👁️ {post.view_count}</span>
-              <span>💬 {post.comment_count}</span>
             </div>
           </Link>
 
