@@ -1,6 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 
-// Axios Request Config에 _retry 속성을 추가하기 위한 인터페이스 확장
+// Axios Request Config 확장
 interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
@@ -33,8 +33,8 @@ api.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as CustomAxiosRequestConfig;
 
-    // config가 없거나, 로그인 요청 에러라면 그냥 리턴 (무한 루프 방지)
-    if (!originalRequest || originalRequest.url?.includes("/login")) {
+    // 무한 루프 방지
+    if (!originalRequest || originalRequest.url?.includes("/login") || originalRequest.url?.includes("/refresh")) {
       return Promise.reject(error);
     }
 
@@ -43,42 +43,45 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
+        // 리프레시 토큰 가져오기 (LocalStorage)
         const refreshToken = localStorage.getItem("refreshToken");
-
+        
         if (!refreshToken) {
-          throw new Error("No refresh token available");
+            throw new Error("리프레시 토큰이 없습니다.");
         }
+        // 2. 토큰 리프레시 요청
+        const { data } = await axios.post(
+          `${BASE_URL}/api/v1/login/refresh`, 
+          { refresh_token: refreshToken }, // Body에 담아서 전송
+          { 
+            headers: { "Content-Type": "application/json" },
+            withCredentials: true 
+          }
+        );
 
-        // 1. 토큰 갱신 요청 (기본 axios 인스턴스 사용 -> 인터셉터 영향 안 받음)
-        // 백엔드 엔드포인트가 /api/v1/login/refresh 인지 꼭 확인하세요!
-        const { data } = await axios.post(`${BASE_URL}/api/v1/login/refresh`, {
-          refresh_token: refreshToken,
-        });
-
+        // 3. 새 토큰 저장
         const newAccessToken = data.access_token;
-        const newRefreshToken = data.refresh_token;
-
-        // 2. 새 토큰 저장
         localStorage.setItem("accessToken", newAccessToken);
-        if (newRefreshToken) {
-          localStorage.setItem("refreshToken", newRefreshToken);
+        
+        if (data.refresh_token) {
+          localStorage.setItem("refreshToken", data.refresh_token);
         }
 
-        // 3. 실패했던 요청의 헤더 업데이트
+        // 4. 실패했던 요청의 헤더 업데이트 후 재요청
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-
-        // 4. 재요청 (api 인스턴스 사용)
         return api(originalRequest);
 
       } catch (refreshError) {
-        // 리프레시 토큰도 만료되었거나 갱신 실패 시 -> 강제 로그아웃
+        // 리프레시 실패 -> 세션 만료로 간주하고 로그아웃 처리
         console.error("Session expired. Logging out...", refreshError);
 
-        localStorage.removeItem("user");
+        // 스토리지 비우기
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
+        localStorage.removeItem("user");         // 일반적인 유저 정보 키
+        localStorage.removeItem("auth-storage"); // Jotai 등 상태관리 키 (확인 후 적용)
 
-        // 페이지 이동으로 확실하게 털어내기
+        // 페이지 이동으로 상태 초기화
         window.location.href = "/login";
 
         return Promise.reject(refreshError);
