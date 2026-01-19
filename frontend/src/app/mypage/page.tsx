@@ -19,7 +19,7 @@ import MyPageSidebar from "@/components/mypage/MyPageSidebar";
 import MyInfoSection from "@/components/mypage/MyInfoSection";
 import PostList from "@/components/mypage/PostList";
 import CommentList from "@/components/mypage/CommentList";
-import Spinner from "@/components/ui/Spinner"; // 🔥 스피너 컴포넌트 (파일 경로 확인!)
+import Spinner from "@/components/ui/Spinner";
 
 type TabType = "info" | "posts" | "comments" | "scraps";
 

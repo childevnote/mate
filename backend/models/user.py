@@ -54,6 +54,7 @@ class EmailVerification(Base):
     email = Column(String, index=True, nullable=False)
     code = Column(String, nullable=False)
     is_verified = Column(Boolean, default=False)
+    purpose = Column(String, default="register", nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 

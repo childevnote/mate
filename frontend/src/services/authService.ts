@@ -149,4 +149,22 @@ export const authService = {
       throw error;
     }
   },
+
+  // 학교 인증 메일 발송
+  sendSchoolEmail: async (email: string) => {
+    const { data } = await api.post("/api/v1/auth/school/send", { email });
+    return data;
+  },
+
+  // 학교 인증 코드 검증
+  verifySchoolCode: async (email: string, code: string) => {
+    const { data } = await api.post("/api/v1/auth/school/verify", { email, code });
+    return data;
+  },
+
+  // 최신 유저 정보 가져오기
+  getMe: async () => {
+    const { data } = await api.get("/api/v1/auth/me"); 
+    return data;
+  },
 };
