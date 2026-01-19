@@ -4,17 +4,21 @@ import Link from "next/link";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useRouter } from "next/navigation";
 import { userAtom, isLoggedInAtom } from "@/store/authStore";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function Navbar() {
   const user = useAtomValue(userAtom);
   const isLoggedIn = useAtomValue(isLoggedInAtom);
   const setUser = useSetAtom(userAtom);
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const handleLogout = () => {
     // 로컬 스토리지 토큰 삭제 및 상태 초기화
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
+    queryClient.clear();
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user");
     setUser(null);
     router.push("/login");
   };
