@@ -2,9 +2,9 @@
 # Mate
 
 ![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=flat-square&logo=fastapi)
-![Next.js](https://img.shields.io/badge/next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
+![Next.js](https://img.shields.io/badge/next.js-000000?style=flat-square&logo=nextdotjs&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white)
-![Node.js](https://img.shields.io/badge/node.js-339933?style=for-the-badge&logo=Node.js&logoColor=white)
+![Node.js](https://img.shields.io/badge/node.js-339933?style=flat-square&logo=Node.js&logoColor=white)
 
 **Mate**는 FastAPI(Backend)와 Next.js(Frontend)로 구성된 모노레포(Monorepo) 구조의 러닝 크루 커뮤니티 웹 애플리케이션입니다.
 
@@ -228,7 +228,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES=30
 
 ```
 
-### Frontend (`frontend/.env.local`)
+### Frontend (`frontend/.env`)
 
 ```ini
 # API Base URL
@@ -251,7 +251,3 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 **Q. Database: Password Authentication Failed**
 
 > `.env` 파일의 `DATABASE_URL`에 오타가 없는지 확인하세요. 비밀번호에 특수문자가 포함된 경우 URL 인코딩이 필요할 수 있습니다.
-
-```
-
-```
