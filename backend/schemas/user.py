@@ -49,3 +49,12 @@ class PasskeyResponse(BaseModel):
     device_name: Optional[str] = "등록된 기기"
     created_at: datetime
     class Config: from_attributes = True
+
+# 학교 인증 메일 발송 요청
+class SchoolEmailSendRequest(BaseModel):
+    email: EmailStr
+
+# 학교 인증 코드 검증 요청
+class SchoolEmailVerifyRequest(BaseModel):
+    email: EmailStr
+    code: str

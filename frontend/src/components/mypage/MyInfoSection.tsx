@@ -2,13 +2,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAtom } from "jotai";
 import { useRouter } from "next/navigation";
 import { AxiosError } from "axios";
-
+import { useState } from "react";
 import { userAtom } from "@/store/authStore";
 import { authService } from "@/services/authService";
 import { userService } from "@/services/userService";
 import { User, PasskeyItem } from "@/types/auth";
 import { UserActionResponse } from "@/types/user";
-
+import SchoolAuthModal from "./SchoolAuthModal";
 import RegisterPasskeyButton from "@/components/auth/RegisterPasskeyButton";
 
 interface MyInfoSectionProps {
@@ -19,6 +19,7 @@ export default function MyInfoSection({ user }: MyInfoSectionProps) {
   const router = useRouter();
   const [, setUser] = useAtom(userAtom);
   const queryClient = useQueryClient();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // 1. 등록된 기기 목록 조회
   const { data: devices, isLoading: isDevicesLoading } = useQuery<PasskeyItem[]>({
@@ -80,7 +81,10 @@ export default function MyInfoSection({ user }: MyInfoSectionProps) {
                   학교 인증을 완료하면 <strong>장터</strong>와 <strong>모든 게시판</strong>을 이용할 수 있습니다.
                 </p>
               </div>
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
+              <button 
+                onClick={() => setIsAuthModalOpen(true)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-blue-200"
+              >
                 인증하기
               </button>
             </div>
@@ -168,6 +172,10 @@ export default function MyInfoSection({ user }: MyInfoSectionProps) {
           </button>
         </div>
       </section>
+      <SchoolAuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => setIsAuthModalOpen(false)} 
+      />
     </div>
   );
 }
