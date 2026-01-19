@@ -45,28 +45,27 @@ export const authService = {
    */
   signupWithPasskey: async (signupData: PasskeySignupRequest) => {
     try {
-      // 3-1. 서버에 가입 옵션 요청 (아이디 중복 체크 및 Challenge 생성)
       const { data: options } = await api.post("/api/v1/auth/passkey/signup/options", {
         username: signupData.username,
       });
 
-      // 3-2. 브라우저 지문 인식 (회원가입 모드)
       const attResp = await startRegistration(options);
 
-      // 3-3. 서버에 검증 요청 + 회원 정보 전송 -> 가입 완료 & 토큰 수신
-      // 백엔드 passkey.py의 signup_verify 함수와 매칭
       const response = await api.post<LoginResponse>("/api/v1/auth/passkey/signup/verify", {
         username: signupData.username,
         nickname: signupData.nickname,
         email: signupData.email,
         university_id: signupData.university_id,
-        response: attResp, // 지문 인식 결과
+        response: attResp,
       });
 
-      // 3-4. 토큰 저장 (자동 로그인)
-      if (response.data.access_token) {
-        localStorage.setItem("accessToken", response.data.access_token);
-        localStorage.setItem("refreshToken", response.data.refresh_token);
+      const { access_token, refresh_token } = response.data;
+
+      if (access_token) {
+        localStorage.setItem("accessToken", access_token);
+      }
+      if (refresh_token) {
+        localStorage.setItem("refreshToken", refresh_token);
       }
 
       return response.data;
@@ -94,10 +93,13 @@ export const authService = {
         username: username,
         response: asseResp,
       });
+      const { access_token, refresh_token } = response.data;
 
-      if (response.data.access_token) {
-        localStorage.setItem("accessToken", response.data.access_token);
-        localStorage.setItem("refreshToken", response.data.refresh_token);
+      if (access_token) {
+        localStorage.setItem("accessToken", access_token);
+      }
+      if (refresh_token) {
+        localStorage.setItem("refreshToken", refresh_token);
       }
 
       return response.data;
