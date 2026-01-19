@@ -68,11 +68,27 @@ def get_best_posts(db: Session, skip: int = 0, limit: int = 5):
 
     return final_posts
 
-def get_posts(db: Session, skip: int = 0, limit: int = 10, category: str = None, user_id: int | None = None):
+def get_posts(
+    db: Session, 
+    skip: int = 0, 
+    limit: int = 10, 
+    category: str = None, 
+    search: str = None,
+    user_id: int | None = None
+):
     query = db.query(Post).options(*get_post_options())
     
     if category and category != "ALL":
         query = query.filter(Post.category == category)
+    
+    if search:
+        search_pattern = f"%{search}%"
+        query = query.filter(
+            or_(
+                Post.title.ilike(search_pattern),
+                Post.content.ilike(search_pattern)
+            )
+        )
         
     posts = query.order_by(Post.created_at.desc()).offset(skip).limit(limit).all()
     

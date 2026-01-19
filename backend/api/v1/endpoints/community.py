@@ -56,7 +56,7 @@ def read_posts(
     if sort == "best":
         return crud.get_best_posts(db, skip=skip, limit=limit)
     
-    return crud.get_posts(db, skip=skip, limit=limit, category=category, user_id=user_id)
+    return crud.get_posts(db, skip=skip, limit=limit, category=category, search=search, user_id=user_id)
 
 # 게시글 상세 조회
 @router.get("/posts/{post_id}", response_model=schemas.PostResponse)
