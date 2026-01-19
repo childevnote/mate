@@ -47,16 +47,13 @@ def read_posts(
     category: str = None, 
     search: str = None,
     db: Session = Depends(get_db),
-    current_user: User | None = Depends(deps.get_current_user_optional)
 ):
-    user_id = current_user.id if current_user else None
-
     skip = (page - 1) * limit
 
     if sort == "best":
         return crud.get_best_posts(db, skip=skip, limit=limit)
     
-    return crud.get_posts(db, skip=skip, limit=limit, category=category, user_id=user_id)
+    return crud.get_posts(db, skip=skip, limit=limit, category=category, search=search)
 
 # 게시글 상세 조회
 @router.get("/posts/{post_id}", response_model=schemas.PostResponse)

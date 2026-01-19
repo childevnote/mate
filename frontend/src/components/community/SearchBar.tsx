@@ -11,9 +11,9 @@ export default function SearchBar() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (keyword.trim()) {
-      router.push(`/?search=${encodeURIComponent(keyword)}`);
+      router.push(`/posts?search=${encodeURIComponent(keyword)}`);
     } else {
-      router.push("/");
+      router.push("/posts");
     }
   };
 
