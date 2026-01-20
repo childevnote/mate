@@ -9,7 +9,6 @@ import { userService } from "@/services/userService";
 import { User, PasskeyItem } from "@/types/auth";
 import { UserActionResponse } from "@/types/user";
 import SchoolAuthModal from "./SchoolAuthModal";
-import RegisterPasskeyButton from "@/components/auth/RegisterPasskeyButton";
 
 interface MyInfoSectionProps {
   user: User;
@@ -141,12 +140,6 @@ export default function MyInfoSection({ user }: MyInfoSectionProps) {
             )}
           </div>
 
-          <div className="p-5 bg-gray-50 border-t border-gray-100">
-            <p className="text-xs text-gray-500 mb-3">
-              현재 기기를 로그인 수단으로 추가하려면 아래 버튼을 누르세요.
-            </p>
-            <RegisterPasskeyButton user={user} />
-          </div>
         </div>
       </section>
 
