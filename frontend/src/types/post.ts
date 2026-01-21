@@ -21,6 +21,7 @@ export interface PostDetail extends PostSummary {
   like_count: number;
   is_liked: boolean;     
   is_scrapped: boolean;
+  author_university?: string;
 }
 
 export type Post = PostDetail; 
