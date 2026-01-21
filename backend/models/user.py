@@ -58,18 +58,18 @@ class EmailVerification(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
-class Passkey(Base):
-    __tablename__ = "passkeys"
+# class Passkey(Base):
+#     __tablename__ = "passkeys"
 
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+#     id = Column(Integer, primary_key=True, index=True)
+#     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     
-    credential_id = Column(String, unique=True, index=True, nullable=False)
-    public_key = Column(String, nullable=False)
-    sign_count = Column(Integer, default=0)
+#     credential_id = Column(String, unique=True, index=True, nullable=False)
+#     public_key = Column(String, nullable=False)
+#     sign_count = Column(Integer, default=0)
 
-    device_name = Column(String, nullable=True) 
+#     device_name = Column(String, nullable=True) 
     
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+#     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    user = relationship("User", back_populates="passkeys")
+#     user = relationship("User", back_populates="passkeys")
