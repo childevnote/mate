@@ -16,11 +16,7 @@ def get_post_options():
 
 # 게시글 객체에 학교 이름 매핑
 def map_post_info(post):
-    # 작성자 학교 정보 매핑
-    if post.author and post.author.university:
-        post.author_university = post.author.university.name
-    else:
-        post.author_university = None # 또는 "미인증"
+    post.author_university = post.author.university.name if (post.author and post.author.university) else None
     return post
 
 # ---------------------------------------------------------
