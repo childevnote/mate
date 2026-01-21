@@ -1,114 +1,125 @@
 "use client";
 
 import { useState } from "react";
-import { useAtomValue } from "jotai";
-import { userAtom } from "@/store/authStore";
+import { Trash2, MessageSquare, CornerDownRight } from "lucide-react";
 import { Comment } from "@/types/comment";
+import { User } from "@/types/auth";
 
 interface CommentItemProps {
   comment: Comment;
-  onReply: (content: string, parentId: number) => void;
+  postAuthorId: number;
+  user: User | null;
+  onReply: (text: string, parentId: number) => void;
   onDelete: (commentId: number) => void;
+  isReply?: boolean;
 }
 
 export default function CommentItem({
   comment,
+  postAuthorId,
+  user,
   onReply,
   onDelete,
+  isReply = false,
 }: CommentItemProps) {
-  const user = useAtomValue(userAtom);
   const [isReplying, setIsReplying] = useState(false);
   const [replyContent, setReplyContent] = useState("");
 
-  const handleReplySubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleReplySubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (!replyContent.trim()) return;
-    onReply(replyContent, comment.id);
+    const textToSend = replyContent;
     setReplyContent("");
     setIsReplying(false);
+    onReply(textToSend, comment.id);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.nativeEvent.isComposing) return;
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleReplySubmit();
+    }
+  };
+
+  const isPostAuthor = comment.author_id === postAuthorId;
+  const isMyComment = user?.id === comment.author_id;
+
+  if (comment.is_deleted) {
+    return (
+      <div className={`p-4 rounded-xl border border-gray-100 bg-gray-50 text-gray-400 text-sm italic ${isReply ? 'ml-6' : ''}`}>
+        삭제된 댓글입니다.
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col">
-      <div
-        className={`flex gap-3 p-3 rounded-lg hover:bg-gray-50 transition ${
-          comment.parent_id ? "ml-8 bg-gray-50/50 border-l-2 border-gray-200" : ""
-        }`}
-      >
-        <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-xs font-bold text-gray-500 shrink-0">
-          {comment.author_nickname[0]}
+    <div className={`group bg-white p-4 rounded-xl border border-gray-100 shadow-sm transition-colors ${isReply ? 'bg-gray-50/50' : ''}`}>
+      <div className="flex justify-between items-start mb-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-bold text-sm text-gray-800">{comment.author_nickname}</span>
+
+          {comment.author_university && (
+            <span className="text-[10px] text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded font-medium border border-blue-100">
+              {comment.author_university}
+            </span>
+          )}
+
+          {isPostAuthor && (
+            <span className="text-[10px] text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded font-bold border border-indigo-100">
+              작성자
+            </span>
+          )}
         </div>
 
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-sm font-semibold text-gray-900">
-              {comment.author_nickname}
-            </span>
-            <span className="text-xs text-gray-400">
-              {new Date(comment.created_at).toLocaleString()}
-            </span>
-          </div>
-
-          <p className="text-sm text-gray-800 whitespace-pre-wrap mb-2">
-            {comment.content}
-          </p>
-
-          <div className="flex gap-3 text-xs">
-            {user && (
-              <button
-                onClick={() => setIsReplying(!isReplying)}
-                className="text-gray-500 hover:text-primary font-medium"
-              >
-                {isReplying ? "취소" : "답글 달기"}
-              </button>
-            )}
-
-            {user?.nickname === comment.author_nickname && (
-              <button
-                onClick={() => {
-                  if (confirm("삭제하시겠습니까?")) onDelete(comment.id);
-                }}
-                className="text-red-500 hover:underline"
-              >
-                삭제
-              </button>
-            )}
-          </div>
-
-          {isReplying && (
-            <form onSubmit={handleReplySubmit} className="mt-3 flex gap-2">
-              <input
-                type="text"
-                value={replyContent}
-                onChange={(e) => setReplyContent(e.target.value)}
-                placeholder={`${comment.author_nickname}님에게 답글 작성...`}
-                className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded text-sm focus:outline-none focus:border-primary"
-                autoFocus
-              />
-              <button
-                type="submit"
-                disabled={!replyContent.trim()}
-                className="px-3 py-1 bg-primary text-white text-xs rounded hover:bg-primary/90 disabled:opacity-50"
-              >
-                등록
-              </button>
-            </form>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-gray-400">
+            {new Date(comment.created_at).toLocaleDateString()}
+          </span>
+          {isMyComment && (
+            <button
+              onClick={() => onDelete(comment.id)}
+              className="text-gray-400 hover:text-red-500 transition-colors"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
           )}
         </div>
       </div>
+      <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">{comment.content}</p>
 
-      {comment.children && comment.children.length > 0 && (
-        <div className="flex flex-col mt-2">
-          {comment.children.map((child) => (
-            <CommentItem
-              key={child.id}
-              comment={child}
-              onReply={onReply}
-              onDelete={onDelete}
-            />
-          ))}
-        </div>
-      )}
+      <div className="mt-2">
+        {!isReplying ? (
+          user && (
+            <button
+              onClick={() => setIsReplying(true)}
+              className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-indigo-600 transition-colors"
+            >
+              <MessageSquare className="w-3 h-3" />
+              답글 달기
+            </button>
+          )
+        ) : (
+          <div className="mt-3 animate-in fade-in slide-in-from-top-1 duration-200">
+            <form onSubmit={handleReplySubmit} className="relative">
+              <textarea
+                value={replyContent}
+                onChange={(e) => setReplyContent(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={`@${comment.author_nickname}님에게 답글 남기기...`}
+                autoFocus
+                className="w-full min-h-[60px] p-3 pr-10 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 text-sm resize-none outline-none disabled:text-gray-400"
+              />
+              <div className="flex gap-2 absolute bottom-2 right-2">
+                <button type="button" onClick={() => setIsReplying(false)} className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1">취소</button>
+                <button type="submit" disabled={!replyContent.trim()} className="p-1.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+                  <CornerDownRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
