@@ -38,25 +38,12 @@ router = APIRouter()
 
 RP_ID = "localhost" 
 RP_NAME = settings.RP_NAME or "Mate Community"
-ALLOWED_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
-# ------------------------------------------------------------------
-# 🔍 헬퍼 1: 환경에 맞는 Origin/RP_ID 반환
-# ------------------------------------------------------------------
+
 def get_webauthn_config(request: Request):
-    origin = request.headers.get("origin")
-    if not origin or origin not in ALLOWED_ORIGINS:
-        origin = ALLOWED_ORIGINS[0]
+    return settings.RP_ID, settings.RP_ORIGIN
 
-    rp_id = "localhost"
-    if "127.0.0.1" in origin:
-        rp_id = "127.0.0.1"
-        
-    return rp_id, origin
 
-# ------------------------------------------------------------------
-# 🛡️ 헬퍼 2: 데이터 정제 (키 변환 및 디코딩)
-# ------------------------------------------------------------------
 def clean_webauthn_data(data: dict) -> dict:
     # 1. 키 매핑 (Camel -> Snake)
     key_map = {
