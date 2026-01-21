@@ -29,6 +29,7 @@ class PostListResponse(BaseModel):
     # 작성자 정보
     author_id: int
     author_nickname: str
+    author_university: Optional[str] = None
     
     # 조회수와 시간
     view_count: int
