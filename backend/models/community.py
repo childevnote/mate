@@ -23,7 +23,7 @@ class Post(Base):
     id = Column(Integer, primary_key=True, index=True)
     category = Column(String, default="FREE", nullable=False)
     title = Column(String, nullable=False)
-    content = Column(Text, nullable=False)
+    content = Column(String, nullable=False)
     view_count = Column(Integer, default=0)
     image = Column(String, nullable=True) 
 

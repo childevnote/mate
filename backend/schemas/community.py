@@ -42,6 +42,7 @@ class PostListResponse(BaseModel):
 # 상세용 응답 (무거운 버전)
 class PostResponse(PostListResponse):
     is_author: bool = False      # 본인 글 여부
+    content: str
     image: Optional[str] = None  # 이미지
     
     comment_count: int           # 댓글 수

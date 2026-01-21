@@ -13,9 +13,9 @@ export interface PostSummary {
 }
 
 // 상세용 포스트 타입 (PostDetail)
-// 목록용 타입(PostSummary)을 상속받아 확장
 export interface PostDetail extends PostSummary {
   is_author: boolean;
+  content: string;
   image?: string | null;
   comment_count: number;
   like_count: number;
