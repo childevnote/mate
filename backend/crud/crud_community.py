@@ -1,8 +1,8 @@
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, subqueryload
 from sqlalchemy import func, desc, or_
 from datetime import timedelta
 from models.community import Post, Comment, PostLike, PostScrap
-from models.user import User, University
+from models.user import User
 from schemas.community import PostCreate, CommentCreate
 
 # ---------------------------------------------------------
@@ -10,14 +10,29 @@ from schemas.community import PostCreate, CommentCreate
 # ---------------------------------------------------------
 def get_post_options():
     return [
-        # 게시글 작성자와 그 작성자의 대학교 정보까지 한 번에 JOIN 
         joinedload(Post.author).joinedload(User.university),
     ]
 
-# 게시글 객체에 학교 이름 매핑
 def map_post_info(post):
-    post.author_university = post.author.university.name if (post.author and post.author.university) else None
+    if post.author:
+        post.author_university = post.author.university.name if post.author.university else None
+        post.author_nickname = post.author.nickname or post.author.email.split("@")[0]
+    else:
+        post.author_university = None
+        post.author_nickname = "알수없음"
     return post
+
+def map_comment_info(comment):
+    if comment.author:
+        comment.author_university = comment.author.university.name if comment.author.university else None
+        comment.author_nickname = comment.author.nickname or comment.author.email.split("@")[0]
+    else:
+        comment.author_university = None
+        comment.author_nickname = "알수없음"
+
+    comment.reply_count = len(comment.replies)
+    
+    return comment
 
 # ---------------------------------------------------------
 # 게시글 작성
@@ -33,26 +48,22 @@ def create_post(db: Session, post: PostCreate, user_id: int):
     db.add(db_post)
     db.commit()
     db.refresh(db_post)
-    
-    # 작성 직후 리턴할 때도 정보 매핑
-    return map_post_info(db_post)
+    return map_post_info(db_post) # 매핑 후 반환
 
 # ---------------------------------------------------------
-# 게시글 삭제
+# 게시글 삭제 (기존 동일)
 # ---------------------------------------------------------
 def delete_post(db: Session, post_id: int, user_id: int):
     post = db.query(Post).filter(Post.id == post_id).first()
-    
-    if not post:
-        return "not_found"
-    
-    if post.author_id != user_id:
-        return "not_authorized"
-    
+    if not post: return "not_found"
+    if post.author_id != user_id: return "not_authorized"
     db.delete(post)
     db.commit()
     return "success"
 
+# ---------------------------------------------------------
+# 인기글 조회
+# ---------------------------------------------------------
 def get_best_posts(db: Session, skip: int = 0, limit: int = 5):
     candidates = db.query(Post)\
         .options(*get_post_options())\
@@ -68,10 +79,13 @@ def get_best_posts(db: Session, skip: int = 0, limit: int = 5):
     for post in final_posts:
         post.is_liked = False
         post.is_scrapped = False
-        map_post_info(post)
+        map_post_info(post) # 🔥 매핑 적용
 
     return final_posts
 
+# ---------------------------------------------------------
+# 게시글 목록 조회
+# ---------------------------------------------------------
 def get_posts(
     db: Session, 
     skip: int = 0, 
@@ -101,49 +115,40 @@ def get_posts(
     for post in posts:
         post.is_liked = False
         post.is_scrapped = False
-        map_post_info(post)
+        map_post_info(post) # 🔥 매핑 적용
             
     return posts
 
+# ---------------------------------------------------------
+# 조회수 증가 (기존 동일)
+# ---------------------------------------------------------
 def increase_view_count(db: Session, post_id: int):
     post = db.query(Post).filter(Post.id == post_id).first()
     if post:
         post.view_count += 1
         db.commit()
 
+# ---------------------------------------------------------
 # 게시글 상세 조회
-def get_post(db: Session, post_id: int, user_id: int = None):
-    result = db.query(
-        Post, 
-        User.nickname.label("author_nickname"),
-        University.name.label("author_university")
-    ).join(User, Post.author_id == User.id)\
-     .outerjoin(University, User.university_id == University.id)\
-     .filter(Post.id == post_id).first()
+# ---------------------------------------------------------
+def get_post(db: Session, post_id: int, user_id: int | None = None):
+    post = db.query(Post).options(*get_post_options()).filter(Post.id == post_id).first()
     
-    if not result:
+    if not post:
         return None
-    
-    post, nickname, university_name = result
 
-    # 좋아요/스크랩 여부 확인
-    is_liked = False
-    is_scrapped = False
+    map_post_info(post) # 🔥 매핑 적용
+
     if user_id:
-        is_liked = db.query(PostLike).filter(PostLike.post_id == post_id, PostLike.user_id == user_id).first() is not None
-        is_scrapped = db.query(PostScrap).filter(PostScrap.post_id == post_id, PostScrap.user_id == user_id).first() is not None
-
-    return {
-        **post.__dict__,
-        "author_nickname": nickname,
-        "author_university": university_name or "미인증",
-        "comment_count": len(post.comments),
-        "like_count": len(post.likes),
-        "scrap_count": len(post.scraps),
-        "is_liked": is_liked,
-        "is_scrapped": is_scrapped,
-        "is_author": post.author_id == user_id
-    }
+        like_record = db.query(PostLike).filter(PostLike.post_id == post_id, PostLike.user_id == user_id).first()
+        scrap_record = db.query(PostScrap).filter(PostScrap.post_id == post_id, PostScrap.user_id == user_id).first()
+        post.is_liked = True if like_record else False
+        post.is_scrapped = True if scrap_record else False
+    else:
+        post.is_liked = False
+        post.is_scrapped = False
+    
+    return post
 
 # ---------------------------------------------------------
 # 댓글 작성
@@ -164,36 +169,29 @@ def create_comment(db: Session, comment: CommentCreate, user_id: int):
     db.commit()
     db.refresh(db_comment)
     
-    # 댓글 응답 시에도 학교 정보가 필요하다면 매핑 (CommentResponse 스키마에 따라)
-    if db_comment.author and db_comment.author.university:
-        db_comment.author_university = db_comment.author.university.name
+    # 🔥 작성 직후 응답을 위해 매핑
+    # (refresh를 했지만 author 관계가 즉시 로딩되지 않을 수 있으므로 조회 후 매핑이 안전)
+    map_comment_info(db_comment)
         
     return db_comment
 
 # ---------------------------------------------------------
-# 댓글 삭제
+# 댓글 삭제 (기존 동일)
 # ---------------------------------------------------------
 def delete_comment(db: Session, comment_id: int, user_id: int):
     comment = db.query(Comment).filter(Comment.id == comment_id).first()
+    if not comment: return "not_found"
+    if comment.author_id != user_id: return "not_authorized"
     
-    if not comment:
-        return "not_found"
-        
-    if comment.author_id != user_id:
-        return "not_authorized"
-        
     if comment.replies:
         comment.is_deleted = True
         comment.content = "삭제된 댓글입니다." 
         db.commit()
-        return "success"
     else:
-        if comment.post:
-            comment.post.comment_count = max(0, comment.post.comment_count - 1)
-            
+        if comment.post: comment.post.comment_count = max(0, comment.post.comment_count - 1)
         db.delete(comment)
         db.commit()
-        return "success"
+    return "success"
 
 # ---------------------------------------------------------
 # 댓글 목록 조회 
@@ -201,18 +199,15 @@ def delete_comment(db: Session, comment_id: int, user_id: int):
 def get_comments_by_post(db: Session, post_id: int, skip: int = 0, limit: int = 50):
     comments = db.query(Comment)\
         .options(
-            joinedload(Comment.author).joinedload(User.university)
+            joinedload(Comment.author).joinedload(User.university),
+            subqueryload(Comment.parent).subqueryload(Comment.replies) 
         )\
         .filter(Comment.post_id == post_id)\
         .order_by(Comment.created_at.asc())\
         .offset(skip).limit(limit).all()
         
-    # 댓글 목록에도 학교 정보 매핑
     for comment in comments:
-        if comment.author and comment.author.university:
-            comment.author_university = comment.author.university.name
-        else:
-            comment.author_university = None
+        map_comment_info(comment)
             
     return comments
 
@@ -221,7 +216,10 @@ def get_comments_by_post(db: Session, post_id: int, skip: int = 0, limit: int = 
 # ---------------------------------------------------------
 def get_comments_by_author(db: Session, user_id: int, skip: int = 0, limit: int = 50):
     comments = db.query(Comment)\
-        .options(joinedload(Comment.post)) \
+        .options(
+            joinedload(Comment.post),
+            subqueryload(Comment.replies) 
+        ) \
         .filter(Comment.author_id == user_id)\
         .order_by(Comment.created_at.desc())\
         .offset(skip).limit(limit).all()
@@ -231,11 +229,13 @@ def get_comments_by_author(db: Session, user_id: int, skip: int = 0, limit: int 
             comment.post_title = comment.post.title
         else:
             comment.post_title = "삭제된 게시글입니다."
+        
+        map_comment_info(comment)
             
     return comments
 
 # ---------------------------------------------------------
-# 좋아요/스크랩 토글 (변경 없음)
+# 좋아요/스크랩 토글 (기존 동일)
 # ---------------------------------------------------------
 def toggle_like(db: Session, post_id: int, user_id: int):
     post = db.query(Post).filter(Post.id == post_id).first()
@@ -273,29 +273,14 @@ def toggle_scrap(db: Session, post_id: int, user_id: int):
 # 내가 쓴 글 조회
 # ---------------------------------------------------------
 def get_my_posts(db: Session, user_id: int, skip: int = 0, limit: int = 10):
-    posts = db.query(Post)\
-        .options(*get_post_options())\
-        .filter(Post.author_id == user_id)\
-        .order_by(Post.created_at.desc())\
-        .offset(skip).limit(limit).all()
-        
-    for post in posts:
-        map_post_info(post)
-        
+    posts = db.query(Post).options(*get_post_options()).filter(Post.author_id == user_id).order_by(Post.created_at.desc()).offset(skip).limit(limit).all()
+    for post in posts: map_post_info(post)
     return posts
 
 # ---------------------------------------------------------
 # 내가 스크랩한 글 조회
 # ---------------------------------------------------------
 def get_my_scraps(db: Session, user_id: int, skip: int = 0, limit: int = 10):
-    posts = db.query(Post)\
-        .join(PostScrap, Post.id == PostScrap.post_id)\
-        .options(*get_post_options())\
-        .filter(PostScrap.user_id == user_id)\
-        .order_by(PostScrap.user_id.desc()) \
-        .offset(skip).limit(limit).all()
-        
-    for post in posts:
-        map_post_info(post)
-        
+    posts = db.query(Post).join(PostScrap, Post.id == PostScrap.post_id).options(*get_post_options()).filter(PostScrap.user_id == user_id).order_by(PostScrap.user_id.desc()).offset(skip).limit(limit).all()
+    for post in posts: map_post_info(post)
     return posts
