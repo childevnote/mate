@@ -29,7 +29,7 @@ class Post(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     
-    # 카테고리 (FREE, INFO, GATHERING)
+    # 카테고리
     category = Column(String, default="FREE", nullable=False)
     title = Column(String, nullable=False)
     content = Column(Text, nullable=False)
