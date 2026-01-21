@@ -4,13 +4,17 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AxiosError } from "axios";
+import { useSetAtom } from "jotai";
+import { userAtom } from "@/store/authStore";
 import { authService } from "@/services/authService";
-import { PasskeySignupRequest } from "@/types/auth";
+import { api } from "@/lib/axios";
+import { PasskeySignupRequest, User } from "@/types/auth";
 import AlertModal from "@/components/ui/AlertModal";
 import Spinner from "@/components/ui/Spinner";
 
 export default function SignupPage() {
   const router = useRouter();
+  const setUser = useSetAtom(userAtom);
 
   const [formData, setFormData] = useState<PasskeySignupRequest>({
     username: "",
@@ -39,31 +43,22 @@ export default function SignupPage() {
   });
 
   const getErrorMessage = (error: unknown): string => {
-    // 백엔드(FastAPI)에서 보낸 에러 메시지 처리
     if (error instanceof AxiosError) {
       if (error.response?.data?.detail) {
         return error.response.data.detail as string;
       }
     }
 
-    // 패스키(WebAuthn) 관련 에러 처리
     if (error instanceof Error) {
-      // NotAllowedError: 기기 잠금이 없거나, 사용자가 취소했을 때
       if (error.name === "NotAllowedError") {
         return "🚫 인증이 차단되었습니다.\n\n1. 기기 잠금(PIN, 지문, FaceID)이 설정되어 있는지 확인해주세요.\n2. 브라우저의 인증 팝업에서 '취소'를 누르지 않았는지 확인해주세요.";
       }
-
-      // InvalidStateError: 이미 등록된 인증 장치일 때
       if (error.name === "InvalidStateError") {
         return "이미 이 기기에 등록된 패스키가 있습니다.\n로그인 페이지로 이동해 주세요.";
       }
-
-      // NotSupportedError: HTTPS가 아니거나(로컬 제외), 브라우저가 미지원
       if (error.name === "NotSupportedError") {
         return "이 브라우저나 환경에서는 패스키를 사용할 수 없습니다.\nChrome, Edge, Safari 최신 버전을 사용해 주세요.";
       }
-      
-      // 그 외 일반 에러
       return error.message;
     }
 
@@ -73,14 +68,13 @@ export default function SignupPage() {
   const showAlert = (
     type: "success" | "error" | "info", 
     message: string, 
-    redirectUrl: string | null = null // 기본값은 null (이동 안 함)
+    redirectUrl: string | null = null 
   ) => {
     setModal({ isOpen: true, type, message, redirectUrl });
   };
 
   const closeModal = () => {
     setModal((prev) => ({ ...prev, isOpen: false }));
-    
     if (modal.redirectUrl) {
       router.push(modal.redirectUrl);
     }
@@ -125,7 +119,7 @@ export default function SignupPage() {
     try {
       await authService.sendVerificationEmail(formData.email);
       setIsCodeSent(true);
-      showAlert("success", `📧 [${formData.email}]로 인증번호가 발송되었습니다.\n스팸 메일함도 확인해주세요!`);
+      showAlert("success", `📧 [${formData.email}]로 인증번호가 발송되었습니다. 메일함을 확인해주세요.`);
     } catch (error: unknown) {
       showAlert("error", getErrorMessage(error));
     } finally {
@@ -158,6 +152,22 @@ export default function SignupPage() {
     setLoadingMap(prev => ({ ...prev, submit: true }));
     try {
       await authService.signupWithPasskey(formData);
+
+
+      const userResponse = await api.get<User>("/api/v1/users/me");
+      const user = userResponse.data;
+
+      setUser({
+        id: user.id,
+        username: user.username,
+        nickname: user.nickname,
+        email: user.email,
+        university: user.university,
+        school_email: user.school_email,
+        is_student_verified: user.is_student_verified,
+        is_active: user.is_active,
+      });
+
       showAlert(
         "success", 
         "🎉 회원가입 및 기기 등록이 완료되었습니다!\n자동으로 로그인됩니다.", 
