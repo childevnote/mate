@@ -70,7 +70,7 @@ class CommentResponse(CommentBase):
     author_id: int
     created_at: datetime
     author_nickname: str
-    author_university: str
+    author_university: Optional[str] = None
     reply_count: int
     is_author: bool = False
     post_title: Optional[str] = None
