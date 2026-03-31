@@ -8,7 +8,11 @@ export interface PostSummary {
   title: string;
   author_id: number;
   author_nickname: string;
+  author_university?: string;
   view_count: number;
+  like_count: number;
+  comment_count: number;
+  scrap_count: number;
   created_at: string;
 }
 
@@ -17,11 +21,8 @@ export interface PostDetail extends PostSummary {
   is_author: boolean;
   content: string;
   image?: string | null;
-  comment_count: number;
-  like_count: number;
   is_liked: boolean;     
   is_scrapped: boolean;
-  author_university?: string;
 }
 
 export type Post = PostDetail; 

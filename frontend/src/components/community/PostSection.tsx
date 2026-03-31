@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { postService } from "@/services/postService";
 import PostCard from "@/components/community/PostCard";
-import { Post ,PostSectionProps } from "@/types/post";
+import { PostSummary, PostSectionProps } from "@/types/post";
 import PostListSkeleton from "@/components/community/PostListSkeleton";
 
 export default function PostSection({
@@ -15,7 +15,7 @@ export default function PostSection({
   link,
 }: PostSectionProps) {
   
-  const { data, isLoading } = useQuery<Post[]>({
+  const { data, isLoading } = useQuery<PostSummary[]>({
     queryKey: ["posts", category, sort],
     queryFn: () => postService.getPosts(1, "", category, sort),
   });
