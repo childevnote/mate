@@ -10,12 +10,12 @@ from schemas.community import PostCreate, CommentCreate
 # ---------------------------------------------------------
 def get_post_options():
     return [
-        joinedload(Post.author).joinedload(User.university),
+        joinedload(Post.author).joinedload(User.university_rel),
     ]
 
 def map_post_info(post):
     if post.author:
-        post.author_university = post.author.university.name if post.author.university else None
+        post.author_university = post.author.university_rel.name if post.author.university_rel else None
         post.author_nickname = post.author.nickname or post.author.email.split("@")[0]
     else:
         post.author_university = None
@@ -24,7 +24,7 @@ def map_post_info(post):
 
 def map_comment_info(comment):
     if comment.author:
-        comment.author_university = comment.author.university.name if comment.author.university else None
+        comment.author_university = comment.author.university_rel.name if comment.author.university_rel else None
         comment.author_nickname = comment.author.nickname or comment.author.email.split("@")[0]
     else:
         comment.author_university = None
@@ -65,23 +65,19 @@ def delete_post(db: Session, post_id: int, user_id: int):
 # 인기글 조회
 # ---------------------------------------------------------
 def get_best_posts(db: Session, skip: int = 0, limit: int = 5):
-    candidates = db.query(Post)\
+    score_expr = Post.view_count + (Post.like_count * 3) + (Post.comment_count * 5)
+    posts = db.query(Post)\
         .options(*get_post_options())\
         .filter(Post.created_at >= func.now() - timedelta(days=7))\
-        .all()
+        .order_by(score_expr.desc())\
+        .offset(skip).limit(limit).all()
 
-    def calculate_score(post):
-        return post.view_count + (post.like_count * 3) + (post.comment_count * 5)
-
-    sorted_posts = sorted(candidates, key=calculate_score, reverse=True)
-    final_posts = sorted_posts[skip : skip + limit]
-    
-    for post in final_posts:
+    for post in posts:
         post.is_liked = False
         post.is_scrapped = False
-        map_post_info(post) # 🔥 매핑 적용
+        map_post_info(post)
 
-    return final_posts
+    return posts
 
 # ---------------------------------------------------------
 # 게시글 목록 조회
@@ -94,13 +90,13 @@ def get_posts(
     search: str = None,
 ):
     query = db.query(Post).options(*get_post_options())
-    query = query.outerjoin(Comment, Post.id == Comment.post_id)
     
     if category and category != "ALL":
         query = query.filter(Post.category == category)
     
     if search:
         search_pattern = f"%{search}%"
+        query = query.outerjoin(Comment, Post.id == Comment.post_id)
         query = query.filter(
             or_(
                 Post.title.ilike(search_pattern),
@@ -108,8 +104,7 @@ def get_posts(
                 Comment.content.ilike(search_pattern)
             )
         )
-        
-    query = query.distinct()
+        query = query.distinct()
     posts = query.order_by(Post.created_at.desc()).offset(skip).limit(limit).all()
     
     for post in posts:
@@ -199,7 +194,7 @@ def delete_comment(db: Session, comment_id: int, user_id: int):
 def get_comments_by_post(db: Session, post_id: int, skip: int = 0, limit: int = 50):
     comments = db.query(Comment)\
         .options(
-            joinedload(Comment.author).joinedload(User.university),
+            joinedload(Comment.author).joinedload(User.university_rel),
             subqueryload(Comment.parent).subqueryload(Comment.replies) 
         )\
         .filter(Comment.post_id == post_id)\
@@ -281,6 +276,6 @@ def get_my_posts(db: Session, user_id: int, skip: int = 0, limit: int = 10):
 # 내가 스크랩한 글 조회
 # ---------------------------------------------------------
 def get_my_scraps(db: Session, user_id: int, skip: int = 0, limit: int = 10):
-    posts = db.query(Post).join(PostScrap, Post.id == PostScrap.post_id).options(*get_post_options()).filter(PostScrap.user_id == user_id).order_by(PostScrap.user_id.desc()).offset(skip).limit(limit).all()
+    posts = db.query(Post).join(PostScrap, Post.id == PostScrap.post_id).options(*get_post_options()).filter(PostScrap.user_id == user_id).order_by(Post.created_at.desc()).offset(skip).limit(limit).all()
     for post in posts: map_post_info(post)
     return posts

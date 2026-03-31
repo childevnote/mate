@@ -10,7 +10,7 @@ class University(Base):
     name = Column(String, unique=True, nullable=False)
     domain = Column(String, unique=True, nullable=False)
 
-    users = relationship("User", back_populates="university")
+    users = relationship("User", back_populates="university_rel")
 
 class User(Base):
     __tablename__ = "users"
@@ -37,7 +37,7 @@ class User(Base):
     # 5. 관계
     university_id = Column(Integer, ForeignKey("universities.id"), nullable=True)
     
-    university = relationship("University", back_populates="users")
+    university_rel = relationship("University", back_populates="users")
     posts = relationship("Post", back_populates="author", cascade="all, delete-orphan")
     comments = relationship("Comment", back_populates="author", cascade="all, delete-orphan")
 
@@ -45,6 +45,15 @@ class User(Base):
     scrapped_posts = relationship("PostScrap", back_populates="user", cascade="all, delete-orphan")
 
     passkeys = relationship("Passkey", back_populates="user", cascade="all, delete-orphan")
+
+    @property
+    def university_name(self):
+        return self.university_rel.name if self.university_rel else None
+
+    @property
+    def university(self):
+        """프론트엔드 호환용: 학교명 문자열 반환"""
+        return self.university_rel.name if self.university_rel else None
 
 
 class EmailVerification(Base):

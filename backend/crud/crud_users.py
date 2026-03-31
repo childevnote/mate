@@ -17,8 +17,8 @@ def get_user(db: Session, user_id: int):
 
 # 유저 생성 (회원가입)
 def create_user(db: Session, user: UserCreate):
-    # 비밀번호 암호화
-    hashed_password = get_password_hash(user.password)
+    # 비밀번호 암호화 (passkey 전용 유저는 password가 None)
+    hashed_password = get_password_hash(user.password) if user.password else None
     
     db_user = User(
         username=user.username,

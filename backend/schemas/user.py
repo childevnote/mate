@@ -15,7 +15,7 @@ class UserBase(BaseModel):
 # 2. 회원가입/생성 관련 (Client -> Server)
 # --------------------------------------
 class UserCreate(UserBase):
-    pass 
+    password: Optional[str] = None
 
 
 class EmailSendRequest(BaseModel):
@@ -36,6 +36,7 @@ class UserResponse(UserBase):
     is_student_verified: bool
     date_joined: datetime
     university_name: Optional[str] = None 
+    university: Optional[str] = None  # 프론트엔드 호환용 alias
     school_email: Optional[str] = None
     class Config:
         from_attributes = True
