@@ -87,6 +87,23 @@ def delete_post(
         
     return {"status": "success", "message": "게시글이 삭제되었습니다."}
 
+# 게시글 수정
+@router.put("/posts/{post_id}", response_model=schemas.PostResponse)
+def update_post(
+    post_id: int,
+    post: schemas.PostUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user)
+):
+    result = crud.update_post(db, post_id=post_id, post_data=post, user_id=current_user.id)
+    
+    if result == "not_found":
+        raise HTTPException(status_code=404, detail="게시글을 찾을 수 없습니다.")
+    elif result == "not_authorized":
+        raise HTTPException(status_code=403, detail="수정 권한이 없습니다.")
+        
+    return result
+
 # 댓글 작성
 @router.post("/comments", response_model=schemas.CommentResponse)
 def create_comment(

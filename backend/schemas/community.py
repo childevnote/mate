@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from enum import Enum
 
 class CategoryType(str, Enum):
@@ -17,9 +17,16 @@ class PostBase(BaseModel):
     content: str
     category: CategoryType
     image: Optional[str] = None
+    media_urls: Optional[List[str]] = []
 
 class PostCreate(PostBase):
     pass
+
+class PostUpdate(BaseModel):
+    title: Optional[str] = None
+    content: Optional[str] = None
+    category: Optional[CategoryType] = None
+    media_urls: Optional[List[str]] = None
 
 class PostListResponse(BaseModel):
     id: int
@@ -46,7 +53,8 @@ class PostListResponse(BaseModel):
 class PostResponse(PostListResponse):
     is_author: bool = False      # 본인 글 여부
     content: str
-    image: Optional[str] = None  # 이미지
+    image: Optional[str] = None  # 이미지 (레거시)
+    media_urls: List[str] = []   # 미디어 URL 목록
     
     comment_count: int           # 댓글 수
     like_count: int              # 좋아요 수

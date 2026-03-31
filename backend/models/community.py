@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Boolean
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database import Base
@@ -26,6 +27,7 @@ class Post(Base):
     content = Column(String, nullable=False)
     view_count = Column(Integer, default=0)
     image = Column(String, nullable=True) 
+    media_urls = Column(JSONB, default=list, server_default='[]')
 
     like_count = Column(Integer, default=0)
     comment_count = Column(Integer, default=0)

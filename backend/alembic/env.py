@@ -14,7 +14,7 @@ load_dotenv()
 
 from database import Base
 from models.user import User, University, EmailVerification
-from models.community import Post, Comment
+from models.community import Post, Comment, PostLike, PostScrap
 
 # config 객체 생성
 config = context.config

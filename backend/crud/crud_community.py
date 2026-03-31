@@ -3,7 +3,7 @@ from sqlalchemy import func, desc, or_
 from datetime import timedelta
 from models.community import Post, Comment, PostLike, PostScrap
 from models.user import User
-from schemas.community import PostCreate, CommentCreate
+from schemas.community import PostCreate, PostUpdate, CommentCreate
 
 # ---------------------------------------------------------
 # 공통 옵션
@@ -42,13 +42,33 @@ def create_post(db: Session, post: PostCreate, user_id: int):
         title=post.title,
         content=post.content,
         category=post.category,
-        image=post.image,    
+        media_urls=post.media_urls or [],
         author_id=user_id
     )
     db.add(db_post)
     db.commit()
     db.refresh(db_post)
     return map_post_info(db_post) # 매핑 후 반환
+
+# ---------------------------------------------------------
+# 게시글 수정
+# ---------------------------------------------------------
+def update_post(db: Session, post_id: int, post_data: PostUpdate, user_id: int):
+    post = db.query(Post).options(*get_post_options()).filter(Post.id == post_id).first()
+    if not post: return "not_found"
+    if post.author_id != user_id: return "not_authorized"
+    
+    update_data = post_data.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(post, key, value)
+    
+    # media_urls가 설정되면 레거시 image 필드 비우기
+    if 'media_urls' in update_data:
+        post.image = None
+    
+    db.commit()
+    db.refresh(post)
+    return map_post_info(post)
 
 # ---------------------------------------------------------
 # 게시글 삭제 (기존 동일)
