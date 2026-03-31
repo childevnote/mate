@@ -51,7 +51,7 @@ api.interceptors.response.use(
         }
         // 2. 토큰 리프레시 요청
         const { data } = await axios.post(
-          `${BASE_URL}/api/v1/login/refresh`, 
+          `${BASE_URL}/api/v1/auth/refresh`, 
           { refresh_token: refreshToken }, // Body에 담아서 전송
           { 
             headers: { "Content-Type": "application/json" },
@@ -78,8 +78,7 @@ api.interceptors.response.use(
         // 스토리지 비우기
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
-        localStorage.removeItem("user");         // 일반적인 유저 정보 키
-        localStorage.removeItem("auth-storage"); // Jotai 등 상태관리 키 (확인 후 적용)
+        localStorage.removeItem("user_storage");  // Jotai atomWithStorage 키
 
         // 페이지 이동으로 상태 초기화
         window.location.href = "/login";

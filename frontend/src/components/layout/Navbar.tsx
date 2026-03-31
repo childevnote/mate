@@ -18,7 +18,7 @@ export default function Navbar() {
     queryClient.clear();
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
-    localStorage.removeItem("user");
+    localStorage.removeItem("user_storage");
     setUser(null);
     router.push("/login");
   };
