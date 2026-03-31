@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mate 커뮤니티 프로젝트 분석 리포트</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8fafc; color: #1e293b; line-height: 1.7; }
+    
+    .container { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
+    
+    header { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: white; padding: 48px 0; margin-bottom: 40px; }
+    header .container { padding-top: 0; padding-bottom: 0; }
+    header h1 { font-size: 2rem; font-weight: 900; margin-bottom: 8px; }
+    header p { font-size: 0.95rem; opacity: 0.8; }
+    
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 40px; }
+    .summary-card { background: white; border-radius: 12px; padding: 24px; border: 1px solid #e2e8f0; text-align: center; }
+    .summary-card .number { font-size: 2.5rem; font-weight: 900; }
+    .summary-card .label { font-size: 0.85rem; color: #64748b; margin-top: 4px; }
+    .critical .number { color: #dc2626; }
+    .high .number { color: #f59e0b; }
+    .medium .number { color: #3b82f6; }
+    .low .number { color: #22c55e; }
+    
+    .section { background: white; border-radius: 12px; padding: 32px; margin-bottom: 24px; border: 1px solid #e2e8f0; }
+    .section h2 { font-size: 1.4rem; font-weight: 800; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid #e2e8f0; display: flex; align-items: center; gap: 10px; }
+    .section h3 { font-size: 1.1rem; font-weight: 700; margin: 20px 0 10px; color: #334155; }
+    
+    .issue { background: #f8fafc; border-radius: 8px; padding: 20px; margin-bottom: 16px; border-left: 4px solid #e2e8f0; }
+    .issue.critical { border-left-color: #dc2626; background: #fef2f2; }
+    .issue.high { border-left-color: #f59e0b; background: #fffbeb; }
+    .issue.medium { border-left-color: #3b82f6; background: #eff6ff; }
+    .issue.low { border-left-color: #22c55e; background: #f0fdf4; }
+    
+    .issue-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .issue-header .badge { padding: 2px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; color: white; }
+    .badge.critical { background: #dc2626; }
+    .badge.high { background: #f59e0b; }
+    .badge.medium { background: #3b82f6; }
+    .badge.low { background: #22c55e; }
+    .issue-header .title { font-weight: 700; font-size: 1rem; }
+    .issue .file { font-size: 0.85rem; color: #6366f1; font-family: 'Fira Code', monospace; margin-bottom: 8px; }
+    .issue .desc { font-size: 0.9rem; color: #475569; }
+    .issue .fix { font-size: 0.9rem; color: #059669; margin-top: 8px; font-weight: 600; }
+    
+    pre { background: #1e293b; color: #e2e8f0; padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 0.85rem; margin: 10px 0; font-family: 'Fira Code', 'Consolas', monospace; }
+    code { font-family: 'Fira Code', 'Consolas', monospace; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem; }
+    pre code { background: none; padding: 0; }
+    
+    .status { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+    .status.fixed { background: #dcfce7; color: #166534; }
+    .status.pending { background: #fef3c7; color: #92400e; }
+    
+    .toc { background: white; border-radius: 12px; padding: 24px 32px; margin-bottom: 24px; border: 1px solid #e2e8f0; }
+    .toc h2 { font-size: 1.2rem; margin-bottom: 12px; }
+    .toc ul { list-style: none; }
+    .toc li { padding: 4px 0; }
+    .toc a { color: #3b82f6; text-decoration: none; font-size: 0.95rem; }
+    .toc a:hover { text-decoration: underline; }
+    
+    footer { text-align: center; padding: 40px 0; color: #94a3b8; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>🔍 Mate 커뮤니티 프로젝트 분석 리포트</h1>
+      <p>생성일: 2026년 3월 31일 | 분석 범위: Backend (FastAPI) + Frontend (Next.js 16)</p>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- 요약 -->
+    <div class="summary-grid">
+      <div class="summary-card critical">
+        <div class="number">6</div>
+        <div class="label">🔴 긴급 (CRITICAL)</div>
+      </div>
+      <div class="summary-card high">
+        <div class="number">7</div>
+        <div class="label">🟠 높음 (HIGH)</div>
+      </div>
+      <div class="summary-card medium">
+        <div class="number">8</div>
+        <div class="label">🔵 보통 (MEDIUM)</div>
+      </div>
+      <div class="summary-card low">
+        <div class="number">5</div>
+        <div class="label">🟢 낮음 (LOW)</div>
+      </div>
+    </div>
+
+    <!-- 목차 -->
+    <div class="toc">
+      <h2>📋 목차</h2>
+      <ul>
+        <li>1. <a href="#backend-critical">Backend 긴급 버그</a></li>
+        <li>2. <a href="#frontend-critical">Frontend 긴급 버그</a></li>
+        <li>3. <a href="#security">보안 이슈</a></li>
+        <li>4. <a href="#performance">성능 이슈</a></li>
+        <li>5. <a href="#schema">스키마 및 타입 불일치</a></li>
+        <li>6. <a href="#code-quality">코드 품질</a></li>
+        <li>7. <a href="#fixes">수정 내역</a></li>
+      </ul>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 1. Backend 긴급 버그 -->
+    <!-- ============================================ -->
+    <div class="section" id="backend-critical">
+      <h2>🔴 1. Backend 긴급 버그</h2>
+
+      <div class="issue critical">
+        <div class="issue-header">
+          <span class="badge critical">CRITICAL</span>
+          <span class="title">B-01: login.py에서 존재하지 않는 속성 참조 → 서버 크래시</span>
+        </div>
+        <div class="file">backend/api/v1/endpoints/login.py — Line 31, 52-53</div>
+        <div class="desc">
+          <code>security.create_access_token(subject=user.id)</code>로 호출하지만, 실제 함수 시그니처는 <code>create_access_token(data: dict)</code>입니다. 
+          <code>subject</code> 키워드 인자가 정의되지 않아 <strong>TypeError</strong>로 서버가 크래시합니다.<br><br>
+          또한 <code>/refresh</code> 엔드포인트에서 <code>security.settings.SECRET_KEY</code>를 참조하지만, security 모듈에는 <code>settings</code> 객체가 없어 <strong>AttributeError</strong>가 발생합니다.
+        </div>
+        <pre><code># 문제 코드 (login.py:31)
+access_token = security.create_access_token(subject=user.id)  # ❌ TypeError
+
+# 문제 코드 (login.py:52-53)
+payload = jwt.decode(refresh_token, security.settings.SECRET_KEY, ...)  # ❌ AttributeError</code></pre>
+        <div class="fix">✅ 수정: data={"sub": str(user.id)} 형태로 호출, security.SECRET_KEY 직접 참조</div>
+        <span class="status fixed">✅ 수정됨</span>
+      </div>
+
+      <div class="issue critical">
+        <div class="issue-header">
+          <span class="badge critical">CRITICAL</span>
+          <span class="title">B-02: 토큰 갱신 URL 불일치 → 무한 로그아웃</span>
+        </div>
+        <div class="file">frontend/src/lib/axios.ts — Line 59</div>
+        <div class="desc">
+          프론트엔드 axios 인터셉터에서 토큰 갱신 요청 URL이 <code>/api/v1/login/refresh</code>이지만, 
+          백엔드 라우터는 <code>/api/v1/auth/refresh</code>입니다. 갱신 요청이 항상 404로 실패하여 사용자가 무한 로그아웃됩니다.
+        </div>
+        <pre><code>// 문제 코드 (axios.ts:59)
+const { data } = await axios.post(`${BASE_URL}/api/v1/login/refresh`, ...)
+
+// 실제 백엔드 라우터 (main.py:30)
+app.include_router(login.router, prefix="/api/v1/auth", ...)</code></pre>
+        <div class="fix">✅ 수정: /api/v1/auth/refresh로 URL 변경</div>
+        <span class="status fixed">✅ 수정됨</span>
+      </div>
+
+      <div class="issue critical">
+        <div class="issue-header">
+          <span class="badge critical">CRITICAL</span>
+          <span class="title">B-03: get_my_scraps 정렬 기준 오류</span>
+        </div>
+        <div class="file">backend/crud/crud_community.py — Line 285</div>
+        <div class="desc">
+          내가 스크랩한 글 목록이 <code>order_by(PostScrap.user_id.desc())</code>로 정렬됩니다. 
+          user_id는 모두 동일하므로 정렬이 무의미하며, 게시글이 비정의된 순서로 반환됩니다.
+        </div>
+        <pre><code># 문제 코드
+.order_by(PostScrap.user_id.desc())  # ❌ 의미 없는 정렬</code></pre>
+        <div class="fix">✅ 수정: .order_by(Post.created_at.desc())로 변경</div>
+        <span class="status fixed">✅ 수정됨</span>
+      </div>
+
+      <div class="issue critical">
+        <div class="issue-header">
+          <span class="badge critical">CRITICAL</span>
+          <span class="title">B-04: UserCreate 스키마에 password 필드 없음 → 회원가입 실패</span>
+        </div>
+        <div class="file">backend/schemas/user.py — Line 17 + backend/crud/crud_users.py — Line 23</div>
+        <div class="desc">
+          <code>UserCreate</code> 스키마에 <code>password</code> 필드가 없지만, <code>create_user()</code>에서 <code>user.password</code>를 참조합니다. 
+          비밀번호 기반 회원가입 시 <strong>AttributeError</strong>가 발생합니다.
+        </div>
+        <pre><code># schemas/user.py
+class UserCreate(UserBase):
+    pass  # ❌ password 필드 없음
+
+# crud/crud_users.py
+hashed_password = get_password_hash(user.password)  # ❌ AttributeError</code></pre>
+        <div class="fix">✅ 수정: password 필드를 Optional[str]로 추가하고 None 처리 로직 추가</div>
+        <span class="status fixed">✅ 수정됨</span>
+      </div>
+
+      <div class="issue critical">
+        <div class="issue-header">
+          <span class="badge critical">CRITICAL</span>
+          <span class="title">B-05: deps.py에서 int() 변환 에러 미처리</span>
+        </div>
+        <div class="file">backend/api/deps.py — Line 46</div>
+        <div class="desc">
+          JWT 토큰의 <code>sub</code> 클레임이 숫자가 아닌 경우 <code>int(user_id)</code>에서 <strong>ValueError</strong>가 발생하여 500 서버 에러가 됩니다.
+        </div>
+        <div class="fix">✅ 수정: try/except로 ValueError 처리 추가</div>
+        <span class="status fixed">✅ 수정됨</span>
+      </div>
+
+      <div class="issue critical">
+        <div class="issue-header">
+          <span class="badge critical">CRITICAL</span>
+          <span class="title">B-06: UserResponse에 university 필드명 불일치</span>
+        </div>
+        <div class="file">backend/schemas/user.py — Line 37 vs frontend/src/types/auth.ts</div>
+        <div class="desc">
+          백엔드 <code>UserResponse</code>에서 <code>university_name</code> 필드를 반환하지만, 
+          프론트엔드는 <code>university</code> 필드를 기대합니다. 학교 이름이 항상 undefined가 됩니다.
+        </div>
+        <div class="fix">✅ 수정: 백엔드 UserResponse에 university 속성 추가 (property로 매핑)</div>
+        <span class="status fixed">✅ 수정됨</span>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 2. Frontend 긴급 버그 -->
+    <!-- ============================================ -->
+    <div class="section" id="frontend-critical">
+      <h2>🟠 2. Frontend 긴급 버그</h2>
+
+      <div class="issue high">
+        <div class="issue-header">
+          <span class="badge high">HIGH</span>
+          <span class="title">F-01: localStorage 키 불일치 → 로그아웃 불완전</span>
+        </div>
+        <div class="file">frontend/src/components/layout/Navbar.tsx — Line 23 + frontend/src/lib/axios.ts — Line 86</div>
+        <div class="desc">
+          Jotai <code>atomWithStorage</code>는 <code>"user_storage"</code> 키를 사용하지만, Navbar의 로그아웃과 axios 인터셉터에서는 
+          <code>"user"</code>, <code>"auth-storage"</code> 등 다른 키를 삭제합니다. 로그아웃 후에도 Jotai 상태가 남아있습니다.
+        </div>
+        <pre><code>// authStore.ts — 실제 Jotai 키
+atomWithStorage("user_storage", null, storage)
+
+// Navbar.tsx — 잘못된 키 삭제
+localStorage.removeItem("user");          // ❌ 존재하지 않는 키
+// axios.ts — 잘못된 키 삭제
+localStorage.removeItem("auth-storage");  // ❌ 존재하지 않는 키</code></pre>
+        <div class="fix">✅ 수정: "user_storage" 키로 통일</div>
+        <span class="status fixed">✅ 수정됨</span>
+      </div>
+
+      <div class="issue high">
+        <div class="issue-header">
+          <span class="badge high">HIGH</span>
+          <span class="title">F-02: PostSection/PostList 타입 불일치 → 빈 목록</span>
+        </div>
+        <div class="file">frontend/src/components/community/PostSection.tsx — Line 20 + PostList.tsx — Line 27</div>
+        <div class="desc">
+          백엔드 <code>GET /posts</code>는 <code>PostListResponse[]</code>(PostSummary 배열)을 직접 반환합니다. 
+          그러나 <code>useQuery&lt;Post[]&gt;</code> / <code>useQuery&lt;PostSummary[]&gt;</code>로 선언되어 있어, 
+          반환된 데이터를 <code>Array.isArray()</code>로 체크 후 슬라이싱하는 로직이 올바르게 작동은 하지만, 
+          타입이 실제 응답과 맞지 않습니다.
+        </div>
+        <div class="fix">✅ 수정: 타입을 PostSummary[]로 통일</div>
+        <span class="status fixed">✅ 수정됨</span>
+      </div>
+
+      <div class="issue high">
+        <div class="issue-header">
+          <span class="badge high">HIGH</span>
+          <span class="title">F-03: PostDetail에 scrap_count 누락</span>
+        </div>
+        <div class="file">frontend/src/types/post.ts — PostDetail 인터페이스</div>
+        <div class="desc">
+          <code>PostDetail</code> 인터페이스에 <code>scrap_count</code> 필드가 없습니다. 
+          백엔드 <code>PostResponse</code>는 <code>scrap_count</code>를 반환하지만 프론트에서 접근할 수 없습니다.
+        </div>
+        <div class="fix">✅ 수정: scrap_count 필드 추가</div>
+        <span class="status fixed">✅ 수정됨</span>
+      </div>
+
+      <div class="issue high">
+        <div class="issue-header">
+          <span class="badge high">HIGH</span>
+          <span class="title">F-04: PostListResponse의 like_count, comment_count 누락</span>
+        </div>
+        <div class="file">frontend/src/types/post.ts — PostSummary 인터페이스</div>
+        <div class="desc">
+          백엔드 <code>PostListResponse</code>에는 <code>like_count</code>, <code>comment_count</code>, <code>scrap_count</code> 등이 없지만 
+          프론트엔드 <code>PostCard</code>에서 이 값들을 사용하려 합니다. 실제로는 상세 응답에만 있는 필드입니다.
+        </div>
+        <div class="fix">ℹ️ 현재 백엔드가 PostListResponse에도 이 필드들을 포함하지 않으므로 주의 필요</div>
+        <span class="status pending">⚠️ 참고</span>
+      </div>
+
+      <div class="issue high">
+        <div class="issue-header">
+          <span class="badge high">HIGH</span>
+          <span class="title">F-05: PostSummary에 author_university 필드 누락</span>
+        </div>
+        <div class="file">frontend/src/types/post.ts — PostSummary</div>
+        <div class="desc">
+          백엔드 <code>PostListResponse</code>는 <code>author_university</code> 필드를 반환하지만, 
+          프론트엔드 <code>PostSummary</code> 타입에는 이 필드가 없습니다.
+        </div>
+        <div class="fix">✅ 수정: author_university 필드 추가</div>
+        <span class="status fixed">✅ 수정됨</span>
+      </div>
+
+      <div class="issue high">
+        <div class="issue-header">
+          <span class="badge high">HIGH</span>
+          <span class="title">F-06: PostSummary에 like_count, comment_count 누락</span>
+        </div>
+        <div class="file">frontend/src/types/post.ts — PostSummary</div>
+        <div class="desc">
+          목록에서 좋아요 수, 댓글 수를 표시하려면 <code>PostSummary</code>에 해당 필드가 필요합니다. 
+          백엔드 스키마에서도 목록 응답에 이 값들을 포함시켜야 합니다.
+        </div>
+        <div class="fix">✅ 수정: PostSummary에 like_count, comment_count 필드 추가 + 백엔드 PostListResponse 스키마 확장</div>
+        <span class="status fixed">✅ 수정됨</span>
+      </div>
+
+      <div class="issue high">
+        <div class="issue-header">
+          <span class="badge high">HIGH</span>
+          <span class="title">F-07: PaginatedResponse 타입이 정의되었지만 사용되지 않음</span>
+        </div>
+        <div class="file">frontend/src/types/common.ts</div>
+        <div class="desc">
+          <code>PaginatedResponse&lt;T&gt;</code>가 정의되어 있고 <code>PostListResponse</code>가 이를 사용하지만, 
+          실제 백엔드 응답은 페이지네이션 래퍼 없이 배열을 직접 반환합니다. 이전 Django 백엔드의 잔재입니다.
+        </div>
+        <div class="fix">ℹ️ 현재 사용되지 않으므로 코드 정리 대상</div>
+        <span class="status pending">⚠️ 참고</span>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 3. 보안 이슈 -->
+    <!-- ============================================ -->
+    <div class="section" id="security">
+      <h2>🔒 3. 보안 이슈</h2>
+
+      <div class="issue high">
+        <div class="issue-header">
+          <span class="badge high">HIGH</span>
+          <span class="title">S-01: SECRET_KEY 하드코딩 및 이중 정의</span>
+        </div>
+        <div class="file">backend/core/config.py vs backend/core/security.py</div>
+        <div class="desc">
+          두 파일에서 서로 다른 기본값으로 SECRET_KEY를 정의합니다:
+          <ul style="margin-top: 8px; padding-left: 20px;">
+            <li><code>config.py</code>: <code>"your-secret-key-here"</code></li>
+            <li><code>security.py</code>: <code>"mate-backend-secret-key-2025"</code></li>
+          </ul>
+          환경변수가 설정되지 않으면 서로 다른 키를 사용하게 되어 토큰 검증이 실패합니다.
+        </div>
+        <div class="fix">✅ 수정: security.py에서 config.settings를 import하여 단일 소스로 통합</div>
+        <span class="status fixed">✅ 수정됨</span>
+      </div>
+
+      <div class="issue medium">
+        <div class="issue-header">
+          <span class="badge medium">MEDIUM</span>
+          <span class="title">S-02: CORS에 프로덕션 URL 하드코딩</span>
+        </div>
+        <div class="file">backend/main.py — Line 13-16</div>
+        <div class="desc">
+          <code>origins</code>에 localhost와 프로덕션 URL이 하드코딩되어 있습니다. 
+          환경변수로 관리하여 배포 환경별로 분리해야 합니다.
+        </div>
+        <div class="fix">✅ 수정: 환경변수 CORS_ORIGINS에서 읽도록 변경</div>
+        <span class="status fixed">✅ 수정됨</span>
+      </div>
+
+      <div class="issue medium">
+        <div class="issue-header">
+          <span class="badge medium">MEDIUM</span>
+          <span class="title">S-03: 인증 엔드포인트에 Rate Limiting 없음</span>
+        </div>
+        <div class="file">backend/api/v1/endpoints/auth.py, passkey.py</div>
+        <div class="desc">
+          이메일 인증 코드 발송, 패스키 챌린지 생성 등 인증 엔드포인트에 Rate Limiting이 없습니다. 
+          무차별 대입 공격이 가능합니다.
+        </div>
+        <div class="fix">⚠️ 권장: slowapi 등의 라이브러리로 Rate Limiting 추가</div>
+        <span class="status pending">⚠️ 참고</span>
+      </div>
+
+      <div class="issue low">
+        <div class="issue-header">
+          <span class="badge low">LOW</span>
+          <span class="title">S-04: print()로 민감 정보 출력</span>
+        </div>
+        <div class="file">backend/core/email.py, backend/api/v1/endpoints/passkey.py</div>
+        <div class="desc">
+          이메일 주소, 에러 정보 등이 <code>print()</code>로 출력됩니다. 
+          프로덕션에서는 <code>logging</code> 모듈을 사용해야 합니다.
+        </div>
+        <span class="status pending">⚠️ 참고</span>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 4. 성능 이슈 -->
+    <!-- ============================================ -->
+    <div class="section" id="performance">
+      <h2>⚡ 4. 성능 이슈</h2>
+
+      <div class="issue medium">
+        <div class="issue-header">
+          <span class="badge medium">MEDIUM</span>
+          <span class="title">P-01: 인기글 조회 시 전체 로드 후 Python 정렬</span>
+        </div>
+        <div class="file">backend/crud/crud_community.py — get_best_posts()</div>
+        <div class="desc">
+          7일간의 모든 게시글을 메모리에 로드한 뒤 Python의 <code>sorted()</code>로 정렬합니다. 
+          게시글이 많아지면 메모리 과부하가 발생합니다.
+        </div>
+        <pre><code># 문제 코드
+candidates = db.query(Post).filter(...).all()  # 전체 로드
+sorted_posts = sorted(candidates, key=calculate_score, reverse=True)  # Python 정렬</code></pre>
+        <div class="fix">✅ 수정: SQL ORDER BY 표현식으로 DB 레벨 정렬</div>
+        <span class="status fixed">✅ 수정됨</span>
+      </div>
+
+      <div class="issue medium">
+        <div class="issue-header">
+          <span class="badge medium">MEDIUM</span>
+          <span class="title">P-02: 검색 시 Comment JOIN으로 인한 중복 + 비효율</span>
+        </div>
+        <div class="file">backend/crud/crud_community.py — get_posts()</div>
+        <div class="desc">
+          검색어가 없어도 항상 Comment 테이블을 OUTER JOIN합니다. 
+          검색 시에만 JOIN하도록 변경해야 합니다.
+        </div>
+        <div class="fix">✅ 수정: 검색어가 있을 때만 Comment JOIN</div>
+        <span class="status fixed">✅ 수정됨</span>
+      </div>
+
+      <div class="issue low">
+        <div class="issue-header">
+          <span class="badge low">LOW</span>
+          <span class="title">P-03: 외부 CDN 폰트 로딩</span>
+        </div>
+        <div class="file">frontend/src/globals.css</div>
+        <div class="desc">
+          Pretendard 폰트를 외부 CDN에서 로드합니다. CDN 장애 시 폰트가 로드되지 않습니다.
+        </div>
+        <span class="status pending">⚠️ 참고</span>
+      </div>
+
+      <div class="issue low">
+        <div class="issue-header">
+          <span class="badge low">LOW</span>
+          <span class="title">P-04: FK 컬럼에 인덱스 없음</span>
+        </div>
+        <div class="file">backend/models/community.py</div>
+        <div class="desc">
+          <code>author_id</code>, <code>post_id</code>, <code>parent_id</code> 등 FK 컬럼에 인덱스가 없어 
+          대규모 데이터에서 조회 성능이 저하됩니다.
+        </div>
+        <span class="status pending">⚠️ 참고</span>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 5. 스키마 및 타입 불일치 -->
+    <!-- ============================================ -->
+    <div class="section" id="schema">
+      <h2>📐 5. 스키마 및 타입 불일치</h2>
+
+      <div class="issue medium">
+        <div class="issue-header">
+          <span class="badge medium">MEDIUM</span>
+          <span class="title">T-01: relationship 문자열 경로 비표준 사용</span>
+        </div>
+        <div class="file">backend/models/community.py — Line 11, 19</div>
+        <div class="desc">
+          <code>relationship("models.user.User", ...)</code>로 전체 모듈 경로를 사용합니다. 
+          SQLAlchemy에서는 클래스명만 사용하는 것이 표준입니다: <code>relationship("User", ...)</code>
+        </div>
+        <div class="fix">✅ 수정: "User"로 변경</div>
+        <span class="status fixed">✅ 수정됨</span>
+      </div>
+
+      <div class="issue medium">
+        <div class="issue-header">
+          <span class="badge medium">MEDIUM</span>
+          <span class="title">T-02: Comment 모델에 replies 관계 누락</span>
+        </div>
+        <div class="file">backend/models/community.py</div>
+        <div class="desc">
+          <code>Comment</code> 모델에 <code>parent_id</code> FK는 있지만 <code>parent</code>, <code>replies</code> relationship이 
+          정의되지 않았습니다. crud_community.py에서 <code>comment.replies</code>를 참조하면 AttributeError가 발생합니다.
+        </div>
+        <div class="fix">✅ 수정: parent/replies 관계 추가</div>
+        <span class="status fixed">✅ 수정됨</span>
+      </div>
+
+      <div class="issue medium">
+        <div class="issue-header">
+          <span class="badge medium">MEDIUM</span>
+          <span class="title">T-03: datetime.utcnow() 사용 (Python 3.12+ 지원 중단)</span>
+        </div>
+        <div class="file">backend/core/security.py — Line 30, 44</div>
+        <div class="desc">
+          <code>datetime.utcnow()</code>는 Python 3.12에서 deprecated 되었습니다.
+        </div>
+        <div class="fix">✅ 수정: datetime.now(timezone.utc)로 변경</div>
+        <span class="status fixed">✅ 수정됨</span>
+      </div>
+
+      <div class="issue low">
+        <div class="issue-header">
+          <span class="badge low">LOW</span>
+          <span class="title">T-04: 미사용 코드 — challenge_store, get_db_session()</span>
+        </div>
+        <div class="file">backend/core/webauthn_config.py, backend/api/deps.py</div>
+        <div class="desc">
+          <code>challenge_store = {}</code>와 <code>get_db_session()</code>은 사용되지 않는 데드 코드입니다.
+        </div>
+        <span class="status pending">⚠️ 참고</span>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 6. 코드 품질 -->
+    <!-- ============================================ -->
+    <div class="section" id="code-quality">
+      <h2>🧹 6. 코드 품질</h2>
+
+      <div class="issue low">
+        <div class="issue-header">
+          <span class="badge low">LOW</span>
+          <span class="title">Q-01: 에러 처리 방식 비일관</span>
+        </div>
+        <div class="desc">
+          백엔드에서 에러를 문자열 반환(<code>"not_found"</code>)과 HTTPException 혼용합니다. 
+          프론트엔드에서는 <code>alert()</code>과 Toast를 혼용합니다.
+        </div>
+      </div>
+
+      <div class="issue low">
+        <div class="issue-header">
+          <span class="badge low">LOW</span>
+          <span class="title">Q-02: 로그아웃 로직 분산</span>
+        </div>
+        <div class="desc">
+          Navbar, axios 인터셉터, 개별 페이지에서 각각 로그아웃 로직을 구현합니다. 
+          <code>useLogout()</code> 커스텀 훅으로 중앙화해야 합니다.
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 7. 수정 내역 -->
+    <!-- ============================================ -->
+    <div class="section" id="fixes">
+      <h2>🛠️ 7. 수정 내역 요약</h2>
+      
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+        <thead>
+          <tr style="background: #f1f5f9;">
+            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e2e8f0;">ID</th>
+            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e2e8f0;">파일</th>
+            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e2e8f0;">수정 내용</th>
+            <th style="padding: 12px; text-align: center; border-bottom: 2px solid #e2e8f0;">상태</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">B-01</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">backend/api/v1/endpoints/login.py</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">create_access_token 호출 방식 수정, security.settings → security 직접 참조</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;"><span class="status fixed">✅</span></td></tr>
+          <tr><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">B-02</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">frontend/src/lib/axios.ts</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">토큰 갱신 URL /api/v1/auth/refresh로 수정</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;"><span class="status fixed">✅</span></td></tr>
+          <tr><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">B-03</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">backend/crud/crud_community.py</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">get_my_scraps 정렬 → Post.created_at.desc()</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;"><span class="status fixed">✅</span></td></tr>
+          <tr><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">B-04</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">backend/schemas/user.py + crud/crud_users.py</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">password Optional 필드 추가, None 안전 처리</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;"><span class="status fixed">✅</span></td></tr>
+          <tr><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">B-05</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">backend/api/deps.py</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">int() ValueError 처리 추가</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;"><span class="status fixed">✅</span></td></tr>
+          <tr><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">B-06</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">backend/schemas/user.py</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">university 필드명 프론트와 일치시킴</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;"><span class="status fixed">✅</span></td></tr>
+          <tr><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">F-01</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">Navbar.tsx + axios.ts</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">localStorage 키 "user_storage"로 통일</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;"><span class="status fixed">✅</span></td></tr>
+          <tr><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">F-02</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">PostSection.tsx</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">타입을 PostSummary[]로 수정</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;"><span class="status fixed">✅</span></td></tr>
+          <tr><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">F-03</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">frontend/src/types/post.ts</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">scrap_count, author_university 등 누락 필드 추가</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;"><span class="status fixed">✅</span></td></tr>
+          <tr><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">S-01</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">backend/core/security.py</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">config.settings에서 SECRET_KEY/ALGORITHM 통합 가져오기</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;"><span class="status fixed">✅</span></td></tr>
+          <tr><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">S-02</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">backend/main.py</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">CORS origins를 환경변수로 변경</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;"><span class="status fixed">✅</span></td></tr>
+          <tr><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">P-01</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">backend/crud/crud_community.py</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">인기글 SQL 레벨 정렬로 변경</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;"><span class="status fixed">✅</span></td></tr>
+          <tr><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">P-02</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">backend/crud/crud_community.py</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">검색 시에만 Comment JOIN</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;"><span class="status fixed">✅</span></td></tr>
+          <tr><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">T-01</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">backend/models/community.py</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">relationship 경로 → "User" 표준 사용</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;"><span class="status fixed">✅</span></td></tr>
+          <tr><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">T-02</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">backend/models/community.py</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">Comment에 parent/replies 관계 추가</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;"><span class="status fixed">✅</span></td></tr>
+          <tr><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">T-03</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">backend/core/security.py</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">datetime.utcnow() → datetime.now(UTC)</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;"><span class="status fixed">✅</span></td></tr>
+          <tr><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">-</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">backend/schemas/community.py</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">PostListResponse에 like_count, comment_count, scrap_count 추가</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;"><span class="status fixed">✅</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer>
+    <p>Mate Community Project Analysis Report — Auto-generated 2026.03.31</p>
+  </footer>
+</body>
+</html>
