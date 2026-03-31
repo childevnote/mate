@@ -25,8 +25,8 @@ def login(
             detail="아이디 또는 비밀번호가 올바르지 않습니다.", # 메시지도 수정
             headers={"WWW-Authenticate": "Bearer"},
         )
-    access_token = security.create_access_token(subject=user.id)
-    refresh_token = security.create_refresh_token(subject=user.id)
+    access_token = security.create_access_token(data={"sub": str(user.id)})
+    refresh_token = security.create_refresh_token(data={"sub": str(user.id)})
     
     return {
         "access_token": access_token,
@@ -44,8 +44,8 @@ def refresh_token(
         # 1. 토큰 해독
         payload = jwt.decode(
             refresh_token, 
-            security.settings.SECRET_KEY,
-            algorithms=[security.settings.ALGORITHM]
+            security.SECRET_KEY,
+            algorithms=[security.ALGORITHM]
         )
         
         user_id = payload.get("sub")
@@ -59,7 +59,7 @@ def refresh_token(
             raise HTTPException(status_code=401, detail="존재하지 않는 사용자입니다.")
             
         # 3. 새 액세스 토큰 발급
-        new_access_token = security.create_access_token(subject=user.id)
+        new_access_token = security.create_access_token(data={"sub": str(user.id)})
         
         return {
             "access_token": new_access_token,
