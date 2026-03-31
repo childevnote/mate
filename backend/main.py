@@ -10,10 +10,10 @@ from api.v1.endpoints import community, users, login, passkey, auth
 
 app = FastAPI(root_path="/default")
 
-origins = [
-    "http://localhost:3000",                      
-    "https://main.d3tpdfp23uq4rz.amplifyapp.com", 
-]
+origins = os.getenv(
+    "CORS_ORIGINS",
+    "http://localhost:3000,https://main.d3tpdfp23uq4rz.amplifyapp.com"
+).split(",")
 
 app.add_middleware(
     CORSMiddleware,
