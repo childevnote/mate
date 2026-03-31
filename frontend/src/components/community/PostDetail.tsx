@@ -5,12 +5,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useAtomValue } from "jotai";
 import Link from "next/link";
-import { ThumbsUp, Bookmark } from "lucide-react";
+import { ThumbsUp, Bookmark, Film } from "lucide-react";
 
 import { userAtom } from "@/store/authStore";
 import { postService } from "@/services/postService";
 import { Post, PostDetailProps } from "@/types/post";
 import { CATEGORY_LABELS } from "@/types/category";
+import { deleteFiles, isVideoUrl } from "@/services/mediaService";
 
 import CommentSection from "@/components/community/CommentSection";
 import LoginAlertModal from "@/components/ui/LoginAlertModal";
@@ -151,7 +152,17 @@ export default function PostDetail({ postId }: PostDetailProps) {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: postService.deletePost,
+    mutationFn: async (id: number) => {
+      await postService.deletePost(id);
+      // 게시글 삭제 후 Storage 파일도 정리
+      const allMedia = [
+        ...(post?.image ? [post.image] : []),
+        ...(post?.media_urls || []),
+      ];
+      if (allMedia.length > 0) {
+        await deleteFiles(allMedia);
+      }
+    },
     onSuccess: () => {
       alert("삭제되었습니다.");
       queryClient.invalidateQueries({ queryKey: ["posts"] });
@@ -247,11 +258,41 @@ export default function PostDetail({ postId }: PostDetailProps) {
 
         {/* 본문 */}
         <div className="p-6 min-h-[200px]">
-          {post.image && (
-            <div className="mb-6 rounded-lg overflow-hidden border border-gray-100 dark:border-zinc-800">
-              <img src={post.image} alt={post.title} className="w-full object-contain max-h-[500px]" />
-            </div>
-          )}
+          {/* 미디어 갤러리 */}
+          {(() => {
+            const allMedia = [
+              ...(post.image ? [post.image] : []),
+              ...(post.media_urls || []),
+            ];
+            if (allMedia.length === 0) return null;
+            return (
+              <div className={`mb-6 ${allMedia.length === 1 ? "" : "grid grid-cols-2 gap-2"}`}>
+                {allMedia.map((url, i) => (
+                  <div key={i} className="rounded-lg overflow-hidden border border-gray-100 dark:border-zinc-800">
+                    {isVideoUrl(url) ? (
+                      <div className="relative">
+                        <video
+                          src={url}
+                          controls
+                          preload="metadata"
+                          className="w-full max-h-[500px]"
+                        />
+                        <div className="absolute top-2 left-2 bg-black/50 rounded-full p-1">
+                          <Film className="w-4 h-4 text-white" />
+                        </div>
+                      </div>
+                    ) : (
+                      <img
+                        src={url}
+                        alt={`${post.title} - ${i + 1}`}
+                        className="w-full object-contain max-h-[500px]"
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
           <p className="whitespace-pre-wrap leading-relaxed text-gray-800 dark:text-gray-300">
             {post.content}
           </p>

@@ -16,8 +16,8 @@ export const postService = {
     return response.data;
   },
 
-  createPost: async (formData: FormData) => {
-    const response = await api.post("/api/v1/community/posts", formData);
+  createPost: async (data: { title: string; content: string; category: string; media_urls?: string[] }) => {
+    const response = await api.post("/api/v1/community/posts", data);
     return response.data;
   },
 
@@ -26,8 +26,8 @@ export const postService = {
     return response.data;
   },
 
-  updatePost: async (id: number, formData: FormData) => {
-    const response = await api.put(`/api/v1/community/posts/${id}`, formData);
+  updatePost: async (id: number, data: { title?: string; content?: string; category?: string; media_urls?: string[] }) => {
+    const response = await api.put(`/api/v1/community/posts/${id}`, data);
     return response.data;
   },
 

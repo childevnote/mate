@@ -21,6 +21,7 @@ export interface PostDetail extends PostSummary {
   is_author: boolean;
   content: string;
   image?: string | null;
+  media_urls: string[];
   is_liked: boolean;     
   is_scrapped: boolean;
 }

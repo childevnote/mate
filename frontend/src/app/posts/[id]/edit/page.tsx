@@ -4,6 +4,7 @@ import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { postService } from "@/services/postService";
+import { deleteFiles } from "@/services/mediaService";
 import PostForm from "@/components/community/PostForm";
 
 interface PageProps {
@@ -17,7 +18,6 @@ export default function EditPostPage({ params }: PageProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  // 기존 게시글 데이터 불러오기
   const {
     data: post,
     isLoading,
@@ -27,17 +27,26 @@ export default function EditPostPage({ params }: PageProps) {
     queryFn: () => postService.getPostDetail(postId),
   });
 
-  // 수정 요청 Mutation
   const updateMutation = useMutation({
-    mutationFn: (formData: FormData) =>
-      postService.updatePost(postId, formData),
+    mutationFn: async ({
+      data,
+      removedUrls,
+    }: {
+      data: { title: string; content: string; category: string; media_urls: string[] };
+      removedUrls: string[];
+    }) => {
+      const result = await postService.updatePost(postId, data);
+      // 백엔드 업데이트 성공 후 Storage에서 제거된 파일 삭제
+      if (removedUrls.length > 0) {
+        await deleteFiles(removedUrls);
+      }
+      return result;
+    },
     onSuccess: () => {
-      // 캐시 갱신: 수정된 내용을 즉시 반영하기 위함
       queryClient.invalidateQueries({ queryKey: ["post", postId] });
       queryClient.invalidateQueries({ queryKey: ["posts"] });
-
       alert("게시글이 성공적으로 수정되었습니다.");
-      router.push(`/posts/${postId}`); // 상세 페이지로 이동
+      router.push(`/posts/${postId}`);
     },
     onError: (err) => {
       console.error(err);
@@ -56,6 +65,12 @@ export default function EditPostPage({ params }: PageProps) {
       </div>
     );
 
+  // 레거시 image 필드와 media_urls 병합 (하위 호환)
+  const existingMediaUrls = [
+    ...(post.image ? [post.image] : []),
+    ...(post.media_urls || []),
+  ];
+
   return (
     <div className="min-h-screen bg-muted/30 pb-20">
       <main className="max-w-3xl mx-auto px-4 py-8">
@@ -66,9 +81,11 @@ export default function EditPostPage({ params }: PageProps) {
             title: post.title,
             content: post.content,
             category: post.category,
-            image: null,
+            media_urls: existingMediaUrls,
           }}
-          onSubmit={(formData) => updateMutation.mutate(formData)}
+          onSubmit={(data, removedUrls) =>
+            updateMutation.mutate({ data, removedUrls })
+          }
           isSubmitting={updateMutation.isPending}
         />
       </main>

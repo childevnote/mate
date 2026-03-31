@@ -9,13 +9,11 @@ export default function WritePage() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  // React Query Mutation (데이터 생성 로직)
   const createMutation = useMutation({
-    mutationFn: postService.createPost,
+    mutationFn: (data: { title: string; content: string; category: string; media_urls: string[] }) =>
+      postService.createPost(data),
     onSuccess: () => {
-      // 목록 캐시 날리기 (새 글을 받아오기 위해)
       queryClient.invalidateQueries({ queryKey: ["posts"] });
-      // 메인으로 이동
       router.push("/");
     },
     onError: (error) => {
@@ -31,7 +29,7 @@ export default function WritePage() {
           새로운 이야기 작성
         </h1>
         <PostForm
-          onSubmit={(formData) => createMutation.mutate(formData)}
+          onSubmit={(data) => createMutation.mutate(data)}
           isSubmitting={createMutation.isPending}
         />
       </main>
