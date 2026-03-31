@@ -8,14 +8,14 @@ class PostLike(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
     post_id = Column(Integer, ForeignKey("posts.id", ondelete="CASCADE"), primary_key=True)
     post = relationship("Post", back_populates="likes")
-    user = relationship("models.user.User", back_populates="liked_posts")
+    user = relationship("User", back_populates="liked_posts")
 
 class PostScrap(Base):
     __tablename__ = "post_scraps"
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
     post_id = Column(Integer, ForeignKey("posts.id", ondelete="CASCADE"), primary_key=True)
     post = relationship("Post", back_populates="scraps")
-    user = relationship("models.user.User", back_populates="scrapped_posts")
+    user = relationship("User", back_populates="scrapped_posts")
 
 class Post(Base):
     __tablename__ = "posts"
@@ -58,4 +58,5 @@ class Comment(Base):
 
     post = relationship("Post", back_populates="comments")
     author = relationship("User", back_populates="comments")
-    parent = relationship("Comment", remote_side=[id], backref="replies")
+    parent = relationship("Comment", remote_side=[id], back_populates="replies")
+    replies = relationship("Comment", back_populates="parent", cascade="all, delete-orphan")
