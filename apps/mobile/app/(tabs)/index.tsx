@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -103,7 +104,7 @@ export default function HomeScreen() {
     queryFn: () => postService.getPosts(1, "", "", "latest"),
   });
 
-  const [refreshing, setRefreshing] = React.useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -172,5 +173,3 @@ export default function HomeScreen() {
     </SafeAreaView>
   );
 }
-
-import React from "react";
