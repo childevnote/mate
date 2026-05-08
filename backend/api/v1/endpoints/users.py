@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Body
 from sqlalchemy.orm import Session
 from typing import Any, List  
 
@@ -68,3 +68,28 @@ def read_own_scraps(
     current_user: User = Depends(deps.get_current_user)
 ):
     return crud_community.get_my_scraps(db, user_id=current_user.id, skip=skip, limit=limit)
+
+
+# Expo Push Token 등록/업데이트 (앱 전용)
+@router.post("/push-token")
+def register_push_token(
+    token: str = Body(...),
+    platform: str = Body(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user),
+):
+    """
+    Stores or updates the Expo Push Token for the authenticated user.
+    Called by the mobile app on startup after requesting notification permissions.
+    """
+    if platform not in ("ios", "android", "web"):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="platform must be 'ios', 'android', or 'web'",
+        )
+
+    current_user.expo_push_token = token
+    current_user.expo_push_platform = platform
+    db.commit()
+
+    return {"message": "Push token registered successfully."}

@@ -36,7 +36,12 @@ from webauthn.helpers.structs import (
 
 router = APIRouter()
 
-RP_ID = "localhost" 
+# RP_ID must match the domain where passkeys are registered.
+# Web: set RP_ID to the app's domain (e.g. "main.d3tpdfp23uq4rz.amplifyapp.com").
+# Mobile: RP_ID must be associated with the app via apple-app-site-association (iOS)
+#         and assetlinks.json (Android) served from that same domain.
+# See MOBILE_SETUP.md for full configuration instructions.
+RP_ID = settings.RP_ID
 RP_NAME = settings.RP_NAME or "Mate Community"
 
 

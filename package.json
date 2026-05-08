@@ -1,0 +1,25 @@
+{
+  "name": "mate",
+  "version": "0.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "dev:web": "turbo run dev --filter=@mate/web",
+    "dev:mobile": "turbo run dev --filter=@mate/mobile",
+    "build:web": "turbo run build --filter=@mate/web"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.4",
+    "typescript": "^5.0.0"
+  },
+  "packageManager": "npm@10.0.0",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
