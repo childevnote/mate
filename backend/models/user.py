@@ -37,6 +37,10 @@ class User(Base):
     # 5. 관계
     university_id = Column(Integer, ForeignKey("universities.id"), nullable=True)
     
+    # 6. 앱 푸시 알림 토큰 (Expo Push Notification)
+    expo_push_token = Column(String, nullable=True)
+    expo_push_platform = Column(String, nullable=True)  # "ios" | "android" | "web"
+    
     university_rel = relationship("University", back_populates="users")
     posts = relationship("Post", back_populates="author", cascade="all, delete-orphan")
     comments = relationship("Comment", back_populates="author", cascade="all, delete-orphan")

@@ -1,0 +1,93 @@
+name: Build & Deploy Mobile App (EAS)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/mobile/**'
+      - 'packages/**'
+      - '.github/workflows/deploy-mobile.yml'
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'EAS Build profile (development | preview | production)'
+        required: true
+        default: 'preview'
+        type: choice
+        options:
+          - development
+          - preview
+          - production
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  build:
+    name: EAS Build
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./apps/mobile
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install root dependencies (workspaces)
+        working-directory: .
+        run: npm ci --workspaces --if-present
+
+      - name: Setup Expo & EAS CLI
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build with EAS
+        run: |
+          PROFILE="${{ github.event.inputs.profile || 'preview' }}"
+          eas build --platform all --profile "$PROFILE" --non-interactive
+
+  update:
+    name: EAS Update (OTA)
+    runs-on: ubuntu-latest
+    # Only run OTA update for preview/production builds on main branch
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: build
+
+    defaults:
+      run:
+        working-directory: ./apps/mobile
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install root dependencies (workspaces)
+        working-directory: .
+        run: npm ci --workspaces --if-present
+
+      - name: Setup Expo & EAS CLI
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Publish OTA Update
+        run: |
+          eas update --branch main --message "OTA: ${{ github.event.head_commit.message }}" --non-interactive

@@ -36,7 +36,7 @@ from webauthn.helpers.structs import (
 
 router = APIRouter()
 
-RP_ID = "localhost" 
+RP_ID = settings.RP_ID
 RP_NAME = settings.RP_NAME or "Mate Community"
 
 
