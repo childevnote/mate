@@ -15,7 +15,7 @@ export default function PostSection({
   link,
 }: PostSectionProps) {
   
-  const { data, isLoading } = useQuery<PostSummary[]>({
+  const { data, isLoading, isError } = useQuery<PostSummary[]>({
     queryKey: ["posts", category, sort],
     queryFn: () => postService.getPosts(1, "", category, sort),
   });
@@ -23,8 +23,7 @@ export default function PostSection({
   // 데이터 안전하게 처리 (배열인지 확인 후 슬라이싱)
   const list = Array.isArray(data) ? data.slice(0, 5) : [];
 
-  // 게시글이 없으면 섹션 자체를 렌더링하지 않음 (빈 박스 방지)
-if (!isLoading && list.length === 0) return null;
+  // 삭제: 게시글이 없다고 섹션을 숨기지 않고 빈 상태 UI를 표시하도록 변경
   return (
     <div className="flex flex-col h-full">
       {/* 섹션 헤더 영역 */}
@@ -52,6 +51,18 @@ if (!isLoading && list.length === 0) return null;
           Array.from({ length: 5 }).map((_, i) => (
             <PostListSkeleton key={i} />
           ))
+        ) : isError ? (
+          // 에러 발생 시 에러 메시지 표시
+          <div className="py-10 text-center text-red-400 text-sm flex flex-col items-center gap-2">
+            <span className="text-2xl opacity-50">⚠️</span>
+            <span>데이터를 불러오지 못했습니다.</span>
+          </div>
+        ) : list.length === 0 ? (
+          // 데이터가 없을 때 빈 상태 표시
+          <div className="py-10 text-center text-gray-500 text-sm flex flex-col items-center gap-2">
+            <span className="text-2xl opacity-50">📭</span>
+            <span>게시글이 없습니다.</span>
+          </div>
         ) : (
           // 로딩 완료: 실제 데이터 보여주기
           list.map((post) => (

@@ -65,7 +65,7 @@ export default function PostsScreen() {
   const [category, setCategory] = useState(params.category ?? "");
   const [sort] = useState(params.sort ?? "latest");
 
-  const { data: posts, isLoading, refetch } = useQuery({
+  const { data: posts, isLoading, isError, refetch } = useQuery({
     queryKey: ["posts", page, search, category, sort],
     queryFn: () => postService.getPosts(page, search, category, sort),
   });
@@ -135,6 +135,13 @@ export default function PostsScreen() {
       {/* 게시글 목록 */}
       {isLoading ? (
         <ActivityIndicator className="mt-12" color="#4f46e5" />
+      ) : isError ? (
+        <View className="flex items-center justify-center py-16">
+          <Text className="text-red-400 text-sm font-semibold mb-2">⚠️ 데이터를 불러오지 못했습니다.</Text>
+          <TouchableOpacity onPress={() => refetch()} className="px-4 py-2 bg-indigo-50 rounded-lg">
+            <Text className="text-indigo-600 text-xs font-bold">다시 시도</Text>
+          </TouchableOpacity>
+        </View>
       ) : (
         <FlatList
           data={posts as PostSummary[]}
